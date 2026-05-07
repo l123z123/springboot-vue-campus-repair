@@ -61,3 +61,7 @@ uploads/repair-images/*
 # Docker
 # ===================================
 docker-compose.override.yml
+
+# virtual machine crash logs
+hs_err_pid*
+replay_pid*
