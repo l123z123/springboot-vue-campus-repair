@@ -83,7 +83,7 @@ const routes = [
       {
         path: 'home',
         name: 'Home',
-        component: () => import('@/views/home/SmartHome.vue'),
+        component: () => import('@/views/Home.vue'),
         meta: { title: '首页' }
       },
       {
@@ -151,10 +151,10 @@ const routes = [
         meta: { title: '帮助反馈' }
       },
       {
-        path: 'booking',
-        name: 'Booking',
-        component: () => import('@/views/Booking.vue'),
-        meta: { title: '预约维修' }
+        path: 'orders',
+        name: 'OrderManage',
+        component: () => import('@/views/OrderManage.vue'),
+        meta: { title: '工单管理' }
       },
       {
         path: 'notice',
@@ -174,6 +174,12 @@ const routes = [
         name: 'StaffWorkbench',
         component: () => import('@/views/StaffWorkbench.vue'),
         meta: { title: '工作台' }
+      },
+      {
+        path: 'staff/tickets',
+        name: 'StaffTickets',
+        component: () => import('@/views/StaffTickets.vue'),
+        meta: { title: '工单管理' }
       },
       {
         path: 'staff/message',

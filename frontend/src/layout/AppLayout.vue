@@ -66,13 +66,21 @@
               <el-icon><HomeFilled /></el-icon>
               <template #title>工作台</template>
             </el-menu-item>
+            <el-menu-item index="/staff/tickets">
+              <el-icon><Tickets /></el-icon>
+              <template #title>工单管理</template>
+            </el-menu-item>
             <el-menu-item index="/staff/message">
               <el-icon><ChatDotRound /></el-icon>
-              <template #title>消息</template>
+              <template #title>消息中心</template>
             </el-menu-item>
             <el-menu-item index="/staff/notice">
               <el-icon><Bell /></el-icon>
-              <template #title>公告</template>
+              <template #title>公告通知</template>
+            </el-menu-item>
+            <el-menu-item index="/help">
+              <el-icon><QuestionFilled /></el-icon>
+              <template #title>帮助反馈</template>
             </el-menu-item>
           </template>
           <template v-else>
@@ -84,23 +92,23 @@
               <el-icon><UploadFilled /></el-icon>
               <template #title>发布报修</template>
             </el-menu-item>
+            <el-menu-item index="/orders">
+              <el-icon><Tickets /></el-icon>
+              <template #title>工单管理</template>
+            </el-menu-item>
             <el-menu-item index="/message">
               <el-icon><ChatDotRound /></el-icon>
-              <template #title>消息</template>
+              <template #title>消息中心</template>
             </el-menu-item>
             <el-menu-item index="/notice">
               <el-icon><Bell /></el-icon>
-              <template #title>公告</template>
+              <template #title>公告通知</template>
+            </el-menu-item>
+            <el-menu-item index="/help">
+              <el-icon><QuestionFilled /></el-icon>
+              <template #title>帮助反馈</template>
             </el-menu-item>
           </template>
-          <el-menu-item index="/profile">
-            <el-icon><User /></el-icon>
-            <template #title>个人中心</template>
-          </el-menu-item>
-          <el-menu-item index="/help">
-            <el-icon><QuestionFilled /></el-icon>
-            <template #title>帮助反馈</template>
-          </el-menu-item>
         </el-menu>
       </aside>
 
@@ -113,7 +121,7 @@
           <div class="app-content">
             <router-view v-slot="{ Component }">
               <transition name="fade" mode="out-in">
-                <keep-alive :include="['Home', 'Message', 'Profile', 'StaffWorkbench']">
+                <keep-alive :include="['Home', 'OrderManage', 'StaffTickets', 'Message', 'Profile', 'StaffWorkbench']">
                   <component :is="Component" />
                 </keep-alive>
               </transition>
@@ -128,7 +136,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Fold, Expand, Bell, ArrowDown, HomeFilled, UploadFilled, ChatDotRound, User, QuestionFilled } from '@element-plus/icons-vue'
+import { Fold, Expand, Bell, ArrowDown, HomeFilled, UploadFilled, ChatDotRound, User, QuestionFilled, Tickets } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { useSystemNotifyStore } from '@/stores/systemNotify'
 import { useWebSocket } from '@/composables/useWebSocket'
@@ -284,7 +292,7 @@ onUnmounted(() => {
   background: #fff;
   border-radius: 12px;
   padding: 20px;
-  min-height: 400px;
+  min-height: calc(100vh - 200px);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 }
 
