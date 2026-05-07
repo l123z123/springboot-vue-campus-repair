@@ -60,7 +60,7 @@ const props = defineProps({
   /** Bearer Token，用于请求头 Authorization */
   token: { type: String, default: '' },
   /** 上传接口地址 */
-  uploadUrl: { type: String, default: 'http://localhost:8081/api/file/upload' }
+  uploadUrl: { type: String, default: '/api/file/upload' }
 })
 
 const emit = defineEmits(['success'])

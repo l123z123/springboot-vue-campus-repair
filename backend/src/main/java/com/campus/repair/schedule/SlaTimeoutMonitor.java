@@ -9,16 +9,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
- * SLA 超时监控：只提醒管理员，不自动改状态，避免破坏人工派单与维修流程。
+ * 超时工单自动取消：超过配置时间的待处理工单自动标记为已取消并通知管理员。
  */
 @Component
 public class SlaTimeoutMonitor {
@@ -28,8 +28,7 @@ public class SlaTimeoutMonitor {
     private static final int STATUS_SUBMITTED = 0;
     private static final int STATUS_WAITING_AUDIT = 1;
     private static final int STATUS_WAITING_DISPATCH = 3;
-    private static final int STATUS_DISPATCHED = 4;
-    private static final int STATUS_PROCESSING = 5;
+    private static final int STATUS_CANCELLED = 10;
 
     private final RepairOrderMapper repairOrderMapper;
     private final NotifyService notifyService;
@@ -43,14 +42,13 @@ public class SlaTimeoutMonitor {
     }
 
     @Scheduled(cron = "0 */5 * * * ?")
+    @Transactional(rollbackFor = Exception.class)
     public void scanTimeoutOrders() {
         LocalDateTime before = LocalDateTime.now().minusHours(pendingHours);
         List<Integer> statuses = Arrays.asList(
                 STATUS_SUBMITTED,
                 STATUS_WAITING_AUDIT,
-                STATUS_WAITING_DISPATCH,
-                STATUS_DISPATCHED,
-                STATUS_PROCESSING
+                STATUS_WAITING_DISPATCH
         );
         LambdaQueryWrapper<RepairOrder> q = new LambdaQueryWrapper<>();
         q.in(RepairOrder::getStatus, statuses)
@@ -60,13 +58,17 @@ public class SlaTimeoutMonitor {
             return;
         }
 
-        String ids = list.stream().map(RepairOrder::getOrderId).map(String::valueOf).collect(Collectors.joining(","));
-        log.warn("[SLA] 超过 {} 小时未闭环的工单数: {}，orderIds: {}", pendingHours, list.size(), ids);
+        for (RepairOrder order : list) {
+            order.setStatus(STATUS_CANCELLED);
+            order.setUpdateTime(LocalDateTime.now());
+            order.setRemark("系统自动取消：超过 " + pendingHours + " 小时未处理");
+            repairOrderMapper.updateById(order);
+            log.info("[SLA] 自动取消超时工单: orderId={}, createTime={}", order.getOrderId(), order.getCreateTime());
+        }
 
         Map<String, Object> payload = new HashMap<>();
         payload.put("count", list.size());
-        payload.put("orderIds", list.stream().map(RepairOrder::getOrderId).collect(Collectors.toList()));
-        payload.put("message", "存在工单处理超时风险，请管理员关注派单与进度");
+        payload.put("message", "系统已自动取消 " + list.size() + " 个超时未处理的工单（超过" + pendingHours + "小时）");
         notifyService.sendRepairNotify("SLA_TIMEOUT", payload);
     }
 }

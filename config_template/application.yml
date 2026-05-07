@@ -35,18 +35,6 @@ spring:
           max-idle: 8
           min-idle: 0
 
-  # RabbitMQ
-  rabbitmq:
-    host: 127.0.0.1
-    port: 5672
-    username: admin
-    password: admin
-    virtual-host: /
-    listener:
-      simple:
-        acknowledge-mode: manual
-        prefetch: 1
-
   # 文件上传
   servlet:
     multipart:

@@ -18,7 +18,6 @@ import com.campus.repair.service.NotifyService;
 import com.campus.repair.service.RepairService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,12 +30,11 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 报修业务实现：防重、分页、状态流转、MQ 通知
+ * 报修业务实现：防重、分页、状态流转、WebSocket 通知
  */
 @Service
 public class RepairServiceImpl implements RepairService {
@@ -67,20 +65,17 @@ public class RepairServiceImpl implements RepairService {
 
     private final RepairOrderMapper repairOrderMapper;
     private final StringRedisTemplate redisTemplate;
-    private final RabbitTemplate rabbitTemplate;
     private final NotifyService notifyService;
     private final SysUserMapper sysUserMapper;
     private final RepairEvaluationMapper repairEvaluationMapper;
 
     public RepairServiceImpl(RepairOrderMapper repairOrderMapper,
                              StringRedisTemplate redisTemplate,
-                             RabbitTemplate rabbitTemplate,
                              NotifyService notifyService,
                              SysUserMapper sysUserMapper,
                              RepairEvaluationMapper repairEvaluationMapper) {
         this.repairOrderMapper = repairOrderMapper;
         this.redisTemplate = redisTemplate;
-        this.rabbitTemplate = rabbitTemplate;
         this.notifyService = notifyService;
         this.sysUserMapper = sysUserMapper;
         this.repairEvaluationMapper = repairEvaluationMapper;
@@ -227,21 +222,7 @@ public class RepairServiceImpl implements RepairService {
         notifyPayload.put("status", order.getStatus());
         notifyPayload.put("isUrgent", order.getIsUrgent());
         notifyService.sendRepairNotify("CREATED", notifyPayload);
-        
-        try {
-            Map<String, Object> mqMsg = new HashMap<>();
-            mqMsg.put("event", "CREATED");
-            mqMsg.put("orderId", order.getOrderId());
-            mqMsg.put("userId", userId);
-            mqMsg.put("location", location);
-            mqMsg.put("phoneNumber", phone);
-            mqMsg.put("isUrgent", order.getIsUrgent());
-            rabbitTemplate.convertAndSend("repair.exchange", "notify", mqMsg);
-            rabbitTemplate.convertAndSend("repair.exchange", "log", mqMsg);
-        } catch (Exception e) {
-            // MQ 通知失败不影响主流程
-            log.warn("MQ 通知失败: {}", e.getMessage());
-        }
+
         return order;
     }
 
@@ -375,24 +356,6 @@ public class RepairServiceImpl implements RepairService {
         return null;
     }
 
-    private boolean isValidStatusTransition(Integer current, Integer target) {
-        Map<Integer, List<Integer>> validTransitions = new HashMap<>();
-        // 完整的工单状态流转（管理员派单模式）
-        validTransitions.put(STATUS_SUBMITTED, Arrays.asList(STATUS_WAITING_AUDIT, STATUS_CANCELLED));  // 待审核 → 审核中/已取消
-        validTransitions.put(STATUS_WAITING_AUDIT, Arrays.asList(STATUS_WAITING_DISPATCH, STATUS_DISPATCHED, STATUS_REJECTED));  // 审核中 → 待派单/已派单/已拒绝
-        validTransitions.put(STATUS_AUDITED, Arrays.asList(STATUS_WAITING_DISPATCH, STATUS_DISPATCHED, STATUS_CANCELLED));  // 兼容旧“已审核”
-        validTransitions.put(STATUS_WAITING_DISPATCH, Arrays.asList(STATUS_DISPATCHED, STATUS_CANCELLED));
-        validTransitions.put(STATUS_DISPATCHED, Arrays.asList(STATUS_PROCESSING, STATUS_CANCELLED));
-        validTransitions.put(STATUS_PROCESSING, Arrays.asList(STATUS_COMPLETED));  // 维修中 → 维修完成
-        validTransitions.put(STATUS_COMPLETED, Arrays.asList(STATUS_CONFIRMED));  // 维修完成 → 学生确认
-        validTransitions.put(STATUS_CONFIRMED, Arrays.asList(STATUS_CLOSED));  // 学生确认 → 已评价
-        validTransitions.put(STATUS_CLOSED, Collections.emptyList());  // 已评价 → 终端状态
-        validTransitions.put(STATUS_REJECTED, Collections.emptyList());  // 已拒绝 → 终端状态
-        validTransitions.put(STATUS_CANCELLED, Collections.emptyList());  // 已取消 → 终端状态
-        return validTransitions.getOrDefault(current, Collections.emptyList())
-                              .contains(target);
-    }
-
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateStatus(Long orderId, Integer newStatus) {
@@ -406,17 +369,9 @@ public class RepairServiceImpl implements RepairService {
         int oldStatus = order.getStatus();
         if (oldStatus == newStatus) return;
 
-        if (!isValidStatusTransition(oldStatus, newStatus)) {
-            throw new BusinessException(400, "状态流转非法");
-        }
-        
         RepairOrderStatus from = RepairOrderStatus.fromCode(oldStatus);
-        RepairOrderStatus to = RepairOrderStatus.fromCode(newStatus);
-        if (from == null || to == null) {
-            throw new BusinessException(400, "无效的工单状态");
-        }
-        if (!from.canTransitionTo(newStatus)) {
-            throw new BusinessException(400, "不允许从 " + from.getLabel() + " 直接变为 " + (to != null ? to.getLabel() : newStatus));
+        if (from == null || !from.canTransitionTo(newStatus)) {
+            throw new BusinessException(400, "状态流转非法");
         }
 
         if (newStatus == STATUS_PROCESSING && oldStatus == STATUS_PENDING) {
@@ -450,7 +405,7 @@ public class RepairServiceImpl implements RepairService {
                 if (rows == 0) {
                     throw new BusinessException("接单失败，工单状态已发生变化（乐观锁拦截）");
                 }
-                sendNotifyMessage(orderId, newStatus);
+        
                 sendWebSocketNotify(orderId, newStatus, order.getUserId());
                 return;
             } finally {
@@ -469,7 +424,6 @@ public class RepairServiceImpl implements RepairService {
             }
             int rows = repairOrderMapper.updateById(order);
             if (rows == 0) throw new BusinessException("状态更新失败，请重试（乐观锁拦截）");
-            sendNotifyMessage(orderId, newStatus);
             sendWebSocketNotify(orderId, newStatus, order.getUserId());
             return;
         }
@@ -480,24 +434,10 @@ public class RepairServiceImpl implements RepairService {
             }
             int rows = repairOrderMapper.updateById(order);
             if (rows == 0) throw new BusinessException("状态更新失败，请重试（乐观锁拦截）");
-            sendNotifyMessage(orderId, newStatus);
             sendWebSocketNotify(orderId, newStatus, order.getUserId());
             return;
         }
         throw new BusinessException(403, "无权限操作");
-    }
-
-    private void sendNotifyMessage(Long orderId, int status) {
-        try {
-            Map<String, Object> msg = new HashMap<>();
-            msg.put("orderId", orderId);
-            msg.put("status", status);
-            msg.put("operatorId", UserContext.getUserId());
-            rabbitTemplate.convertAndSend("repair.exchange", "notify", msg);
-            rabbitTemplate.convertAndSend("repair.exchange", "log", msg);
-        } catch (Exception e) {
-            // 记录日志，不抛出不影响主流程
-        }
     }
 
     private void sendWebSocketNotify(Long orderId, int status, Long targetUserId) {
@@ -543,7 +483,7 @@ public class RepairServiceImpl implements RepairService {
             order.setStatus(STATUS_REJECTED);
             order.setUpdateTime(LocalDateTime.now());
             repairOrderMapper.updateById(order);
-            sendNotifyMessage(orderId, order.getStatus());
+
             sendWebSocketNotify(orderId, order.getStatus(), order.getUserId());
             return;
         }
@@ -561,8 +501,7 @@ public class RepairServiceImpl implements RepairService {
         }
         order.setUpdateTime(LocalDateTime.now());
         repairOrderMapper.updateById(order);
-        
-        sendNotifyMessage(orderId, order.getStatus());
+
         sendWebSocketNotify(orderId, order.getStatus(), order.getUserId());
         if (order.getRepairmanId() != null) {
             sendWebSocketNotify(orderId, order.getStatus(), order.getRepairmanId());
@@ -730,7 +669,7 @@ public class RepairServiceImpl implements RepairService {
         order.setUpdateTime(LocalDateTime.now());
         repairOrderMapper.updateById(order);
         
-        sendNotifyMessage(orderId, STATUS_DISPATCHED);
+
         sendWebSocketNotify(orderId, STATUS_DISPATCHED, order.getUserId());
         sendWebSocketNotify(orderId, STATUS_DISPATCHED, w.getUserId());
     }
@@ -783,7 +722,7 @@ public class RepairServiceImpl implements RepairService {
             throw new BusinessException("接单失败，工单已被其他人处理，请刷新后重试");
         }
         
-        sendNotifyMessage(orderId, STATUS_PROCESSING);
+
         sendWebSocketNotify(orderId, STATUS_PROCESSING, order.getUserId());
     }
     
@@ -825,7 +764,7 @@ public class RepairServiceImpl implements RepairService {
         order.setUpdateTime(LocalDateTime.now());
         repairOrderMapper.updateById(order);
 
-        sendNotifyMessage(orderId, STATUS_COMPLETED);
+
         sendWebSocketNotify(orderId, STATUS_COMPLETED, order.getUserId());
     }
     
@@ -853,7 +792,7 @@ public class RepairServiceImpl implements RepairService {
         order.setUpdateTime(LocalDateTime.now());
         repairOrderMapper.updateById(order);
         
-        sendNotifyMessage(orderId, STATUS_CONFIRMED);
+
         // 通知负责维修工：学生已确认（与「谁需感知」一致）
         if (order.getRepairmanId() != null) {
             sendWebSocketNotify(orderId, STATUS_CONFIRMED, order.getRepairmanId());

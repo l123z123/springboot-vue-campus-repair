@@ -161,7 +161,11 @@
             </el-breadcrumb-item>
           </el-breadcrumb>
           <div class="admin-content">
-            <router-view />
+            <router-view v-slot="{ Component }">
+              <transition name="fade" mode="out-in">
+                <component :is="Component" />
+              </transition>
+            </router-view>
           </div>
         </div>
       </main>

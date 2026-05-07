@@ -99,7 +99,6 @@ import {
   getStaffPerformance
 } from '@/api/dashboard'
 import { getRepairStatusLabel } from '@/constants/repairStatus'
-import { MOCK_STAFF } from '@/mock/tickets'
 
 defineOptions({ name: 'AdminStats' })
 
@@ -159,22 +158,8 @@ onMounted(async () => {
       heatmapMatrix.value = hourHeatmap.map((item) => [item.hour, item.day, item.value])
     }
     let perf = Array.isArray(staffPerf) ? staffPerf : []
-    // 后端暂时没有真实绩效数据时，使用更贴近实战的占位数据：
-    // 以值班频率高的师傅完成 60~40 单，其余 35~20 单，评分在 4.0~4.9 之间
-    if (!perf.length && Array.isArray(MOCK_STAFF)) {
-      const baseCount = 20
-      const maxExtra = 40 // 顶尖维修工额外 +40 单
-      const maxIndex = Math.min(7, MOCK_STAFF.length - 1)
-      perf = MOCK_STAFF.slice(0, 8).map((s, idx) => {
-        const weight = (maxIndex - idx) / maxIndex // 1 ~ 0
-        const count = Math.round(baseCount + maxExtra * weight) // 大约 60~20 单
-        const rating = 4 + 0.9 * weight // 4.9~4.0
-        return {
-          name: s.realName,
-          count,
-          rating: Number(rating.toFixed(1))
-        }
-      })
+    if (!perf.length) {
+      perf = []
     }
     staffPerformance.value = perf
   } catch (_) {

@@ -48,9 +48,11 @@
       </header>
       <main class="layout__main">
         <router-view v-slot="{ Component }">
-          <keep-alive :include="keepAliveNames">
-            <component :is="Component" />
-          </keep-alive>
+          <transition name="fade" mode="out-in">
+            <keep-alive :include="keepAliveNames">
+              <component :is="Component" />
+            </keep-alive>
+          </transition>
         </router-view>
       </main>
     </section>

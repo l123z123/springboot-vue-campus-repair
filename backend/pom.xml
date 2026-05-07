@@ -66,11 +66,7 @@
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
-        <!-- RabbitMQ -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-amqp</artifactId>
-        </dependency>
+        <!-- 消息通知已改用 WebSocket 直接推送，不再依赖 RabbitMQ -->
 
         <!-- WebSocket -->
         <dependency>
@@ -84,14 +80,10 @@
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
-        <!-- 健康检查、指标（K8S/监控对接） -->
+        <!-- 健康检查（/actuator/health） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.micrometer</groupId>
-            <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
 
         <!-- Hutool -->

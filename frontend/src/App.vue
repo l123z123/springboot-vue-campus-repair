@@ -22,7 +22,6 @@
 </script>
 
 <style>
-/* 全局样式重置和统一设置 */
 * {
   margin: 0;
   padding: 0;
@@ -42,12 +41,6 @@ body {
   background: var(--el-bg-color-page);
 }
 
-.app {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
-}
-
-/* 加载动画 */
 .app-loading {
   min-height: 100vh;
   display: flex;
@@ -77,89 +70,44 @@ body {
   font-weight: 500;
 }
 
-/* 滚动条美化 */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--el-fill-color-lighter);
-  border-radius: 4px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--el-color-primary-light-5);
-  border-radius: 4px;
-  transition: background 0.3s ease;
+  background: #d0d5dd;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--el-color-primary-light-3);
+  background: #b0b5bd;
 }
 
-/* 选择文字美化 */
 ::selection {
   background: var(--el-color-primary-light-7);
   color: var(--el-color-primary);
 }
 
-/* 按钮通用样式增强 */
-.el-button {
-  border-radius: 10px;
-  font-weight: 500;
-  transition: all 0.3s ease;
+/* 页面过渡动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
-.el-button--primary {
-  background: linear-gradient(135deg, var(--el-color-primary), #7c66f0);
-  border: none;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.el-button--primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-}
-
-/* 输入框通用样式增强 */
-.el-input__wrapper {
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
-}
-
-.el-input__wrapper:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-}
-
-.el-input__wrapper.is-focus {
-  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.25);
-}
-
-/* 卡片通用样式增强 */
-.el-card {
-  border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  border: none;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.el-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-}
-
-/* 响应式基础设置 */
 @media (max-width: 768px) {
-  html {
-    font-size: 15px;
-  }
+  html { font-size: 15px; }
 }
 
 @media (max-width: 480px) {
-  html {
-    font-size: 14px;
-  }
+  html { font-size: 14px; }
 }
 </style>

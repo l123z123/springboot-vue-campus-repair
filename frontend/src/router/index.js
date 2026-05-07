@@ -20,8 +20,6 @@ const routes = [
     component: () => import('@/views/ForgotPassword.vue'),
     meta: { requiresAuth: false }
   },
-  { path: '/upload', redirect: '/publish' },
-  { path: '/repair-list', redirect: '/profile' },
 
   // 管理后台（AdminLayout：左侧栏 + 顶栏）
   {
@@ -34,47 +32,43 @@ const routes = [
         path: 'dashboard',
         name: 'AdminDashboard',
         component: () => import('@/views/admin/Dashboard.vue'),
-        meta: { title: '首页概览' }
-      },
-      {
-        path: 'workorders',
-        redirect: '/admin/tickets'
+        meta: { title: '首页概览', roles: ['ADMIN'] }
       },
       {
         path: 'tickets',
         name: 'AdminTickets',
         component: () => import('@/views/admin/Tickets.vue'),
-        meta: { title: '工单管理', requiresAuth: true, roles: ['ADMIN'] }
+        meta: { title: '工单管理', roles: ['ADMIN'] }
       },
       {
         path: 'users',
         name: 'AdminUsers',
         component: () => import('@/views/admin/Users.vue'),
-        meta: { title: '用户管理' }
+        meta: { title: '用户管理', roles: ['ADMIN'] }
       },
       {
         path: 'stats',
         name: 'AdminStats',
         component: () => import('@/views/admin/Stats.vue'),
-        meta: { title: '数据统计' }
+        meta: { title: '数据统计', roles: ['ADMIN'] }
       },
       {
         path: 'feedback',
         name: 'FeedbackManage',
         component: () => import('@/views/admin/FeedbackManage.vue'),
-        meta: { title: '反馈管理' }
+        meta: { title: '反馈管理', roles: ['ADMIN'] }
       },
       {
         path: 'settings',
         name: 'AdminSettings',
         component: () => import('@/views/admin/Settings.vue'),
-        meta: { title: '系统设置' }
+        meta: { title: '系统设置', roles: ['ADMIN'] }
       },
       {
         path: 'profile',
         name: 'AdminProfile',
         component: () => import('@/views/admin/Profile.vue'),
-        meta: { title: '个人中心' }
+        meta: { title: '个人中心', roles: ['ADMIN'] }
       }
     ]
   },
@@ -83,7 +77,7 @@ const routes = [
   {
     path: '/',
     component: () => import('@/layout/AppLayout.vue'),
-    meta: { requiresAuth: true, showBottomNav: false },
+    meta: { requiresAuth: true },
     children: [
       { path: '', redirect: '/home' },
       {
@@ -99,6 +93,12 @@ const routes = [
         meta: { showBottomNav: true }
       },
       {
+        path: 'repair/create',
+        name: 'RepairCreate',
+        component: () => import('@/views/Publish.vue'),
+        meta: { showBottomNav: true }
+      },
+      {
         path: 'message',
         name: 'Message',
         component: () => import('@/views/Message.vue'),
@@ -106,9 +106,7 @@ const routes = [
       },
       {
         path: 'message/:id',
-        name: 'MessageDetail',
-        component: () => import('@/views/MessageDetail.vue'),
-        meta: { showBottomNav: false }
+        redirect: (to) => `/order-chat/${to.params.id}`
       },
       {
         path: 'profile',
@@ -117,16 +115,16 @@ const routes = [
         meta: { showBottomNav: true }
       },
       {
+        path: 'profile/edit',
+        name: 'ProfileEdit',
+        component: () => import('@/views/ProfileEdit.vue'),
+        meta: { showBottomNav: false }
+      },
+      {
         path: 'order/:id',
         name: 'OrderDetail',
         component: () => import('@/views/OrderDetail.vue'),
         meta: { showBottomNav: false }
-      },
-      {
-        path: 'repair/create',
-        name: 'RepairCreate',
-        component: () => import('@/views/Publish.vue'),
-        meta: { showBottomNav: true }
       },
       {
         path: 'repair/detail/:id',
@@ -159,6 +157,19 @@ const routes = [
         meta: { showBottomNav: false }
       },
       {
+        path: 'notice',
+        name: 'Notice',
+        component: () => import('@/views/Notice.vue'),
+        meta: { showBottomNav: false }
+      },
+      {
+        path: 'repair/history',
+        name: 'RepairHistory',
+        redirect: () => ({ path: '/profile', query: { scroll: 'records' } })
+      },
+
+      // 维修工端路由
+      {
         path: 'staff/workbench',
         name: 'StaffWorkbench',
         component: () => import('@/views/StaffWorkbench.vue'),
@@ -172,32 +183,13 @@ const routes = [
       },
       {
         path: 'staff/message/:id',
-        name: 'StaffMessageDetail',
-        component: () => import('@/views/MessageDetail.vue'),
-        meta: { showBottomNav: false }
+        redirect: (to) => `/order-chat/${to.params.id}`
       },
       {
         path: 'staff/notice',
         name: 'StaffNotice',
         component: () => import('@/views/Notice.vue'),
         meta: { showBottomNav: true }
-      },
-      {
-        path: 'notice',
-        name: 'Notice',
-        component: () => import('@/views/Notice.vue'),
-        meta: { showBottomNav: false }
-      },
-      {
-        path: 'profile/edit',
-        name: 'ProfileEdit',
-        component: () => import('@/views/ProfileEdit.vue'),
-        meta: { showBottomNav: false }
-      },
-      {
-        path: 'repair/history',
-        name: 'RepairHistory',
-        redirect: () => ({ path: '/profile', query: { scroll: 'records' } })
       }
     ]
   }
@@ -208,27 +200,16 @@ const router = createRouter({
   routes
 })
 
-// 无需登录即可访问的路径（白名单）
 const PUBLIC_PATHS = ['/login', '/register', '/forgot-password']
+
+const ROLE_HOMES = { 2: '/admin/dashboard', 1: '/staff/workbench', 0: '/home' }
+const ROLE_NAMES = { 0: 'STUDENT', 1: 'STAFF', 2: 'ADMIN' }
 
 router.beforeEach((to, _from, next) => {
   const token = localStorage.getItem('token')
-  const isPublic = PUBLIC_PATHS.some((p) => to.path === p || to.path.startsWith(p + '/'))
-  let roleName = 'STUDENT'
-  try {
-    const userStore = useUserStore()
-    const role = userStore.userInfo?.role ?? 0
-    const roleNames = { 0: 'STUDENT', 1: 'STAFF', 2: 'ADMIN' }
-    roleName = roleNames[role] || 'STUDENT'
-  } catch (_) {}
+  const isPublic = PUBLIC_PATHS.includes(to.path)
 
-  const allowedRouteNames = {
-    STUDENT: ['Home', 'Publish', 'Message', 'MessageDetail', 'Profile', 'OrderDetail', 'OrderChat', 'Booking', 'Notice', 'ProfileEdit', 'RepairDetail', 'Help'],
-    STAFF: ['StaffWorkbench', 'StaffMessage', 'StaffMessageDetail', 'StaffNotice', 'Profile', 'OrderDetail', 'OrderChat', 'RepairDetail', 'Home', 'ProfileEdit', 'Help'],
-    ADMIN: ['Home', 'AdminDashboard', 'AdminTickets', 'AdminUsers', 'AdminStats', 'AdminSettings', 'AdminProfile', 'FeedbackManage', 'Publish', 'Message', 'MessageDetail', 'Profile', 'OrderDetail', 'OrderChat', 'Notice', 'ProfileEdit', 'Booking', 'Help', 'RepairDetail']
-  }
-
-  // 未登录访问受保护页面 -> 强制跳转登录
+  // 未登录访问受保护页面 -> 跳转登录
   if (!isPublic && !token) {
     try {
       const userStore = useUserStore()
@@ -239,42 +220,38 @@ router.beforeEach((to, _from, next) => {
     return
   }
 
-  // 已登录访问登录页 -> 根据角色重定向到对应首页
+  // 已登录访问登录页 -> 根据角色重定向
   if (to.path === '/login' && token) {
     try {
       const userStore = useUserStore()
       const role = userStore.userInfo?.role ?? 0
-      const roleHomes = { 2: '/admin/dashboard', 1: '/staff/workbench', 0: '/home' }
-      const target = roleHomes[role] ?? '/home'
-      next(target)
+      next(ROLE_HOMES[role] || '/home')
     } catch (_) {
       next('/home')
     }
     return
   }
 
-  // 登录页直接放行
+  // 公开页面直接放行
   if (isPublic) {
     next()
     return
   }
 
-  // 角色校验（基于 meta.roles 或角色允许列表）
+  // 角色权限校验（基于 meta.roles）
   if (to.meta.roles?.length) {
     try {
       const userStore = useUserStore()
       const role = userStore.userInfo?.role ?? 0
-      const roleNames = { 0: 'STUDENT', 1: 'STAFF', 2: 'ADMIN' }
-      const userRole = roleNames[role]
+      const userRole = ROLE_NAMES[role] || 'STUDENT'
       if (!to.meta.roles.includes(userRole)) {
-        next('/home')
+        next(ROLE_HOMES[role] || '/home')
         return
       }
     } catch (_) {}
-    next()
-  } else {
-    next()
   }
+
+  next()
 })
 
 export default router

@@ -44,7 +44,7 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeRequests()
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers(EndpointRequest.to("health", "info", "metrics", "prometheus")).permitAll()
+                .requestMatchers(EndpointRequest.to("health", "info")).permitAll()
                 .antMatchers(
                         "/auth/login",
                         "/auth/login-email",
