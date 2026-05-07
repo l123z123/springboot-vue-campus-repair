@@ -1,0 +1,91 @@
+# 校园报修系统 - SpringBoot 配置模板
+# 使用时复制到 backend/src/main/resources/application.yml
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: campus-repair
+
+  # MySQL 数据源
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3307/campus_repair?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: 123695487q
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-timeout: 30000
+
+  # Redis (用于缓存、分布式锁)
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      password: 123321
+      database: 0
+      timeout: 10000
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+  # RabbitMQ
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: admin
+    password: admin
+    virtual-host: /
+    listener:
+      simple:
+        acknowledge-mode: manual
+        prefetch: 1
+
+  # 文件上传
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 50MB
+
+  # 定时任务
+  task:
+    scheduling:
+      enabled: true
+
+  # Redisson 分布式锁 (redisson-spring-boot-starter)
+  # 单机: redis://127.0.0.1:6379, 密码 123321
+  redisson:
+    single-server-config:
+      address: redis://127.0.0.1:6379
+      password: 123321
+      database: 1
+
+# MyBatis-Plus
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.campus.repair.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: assign_id
+      logic-delete-field: isDeleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# 本地文件上传路径 (映射到 /files/**)
+file:
+  upload-path: ./uploads/
+
+# JWT 配置 (示例, 按实际调整)
+jwt:
+  secret: your-256-bit-secret-key-here-change-in-production
+  expiration: 86400000

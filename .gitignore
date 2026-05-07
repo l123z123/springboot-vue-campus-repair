@@ -1,0 +1,63 @@
+# ===================================
+# IDE
+# ===================================
+.idea/
+*.iml
+*.iws
+*.ipr
+.cursor/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ===================================
+# Java / Maven / Gradle
+# ===================================
+target/
+!.mvn/wrapper/maven-wrapper.jar
+*.class
+*.jar
+*.war
+*.log
+
+# ===================================
+# Spring Boot
+# ===================================
+backend/src/main/resources/application.yml
+*.pid
+
+# ===================================
+# Node / Vue
+# ===================================
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local
+*.log
+npm-debug.log*
+
+# ===================================
+# OS
+# ===================================
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# ===================================
+# Uploads (runtime data)
+# ===================================
+uploads/repair-images/*
+!uploads/repair-images/.gitkeep
+
+# ===================================
+# Environment / Secrets
+# ===================================
+.env
+.env.*
+*.local.properties
+
+# ===================================
+# Docker
+# ===================================
+docker-compose.override.yml

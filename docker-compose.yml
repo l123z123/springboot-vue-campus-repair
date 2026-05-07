@@ -1,0 +1,83 @@
+# 校园报修系统 - 中间件 + 后端
+# 启动: docker-compose up -d
+# 停止: docker-compose down
+# 后端需先本地 mvn package，再 docker-compose up -d
+# 样例数据：见 sql/seed_repair_orders_50.sql 与 数据库_样例数据_README.txt（建表并 init_data 后执行；可 python scripts/gen_seed_50.py 重生成）
+
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0.36
+    container_name: campus_repair_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: '123695487q'
+      MYSQL_DATABASE: campus_repair
+      MYSQL_CHARSET: utf8mb4
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p123695487q"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:6.2.14
+    container_name: campus_repair_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --requirepass 123321 --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "123321", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3.12.10-management
+    container_name: campus_repair_rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: campus_repair_backend
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MYSQL_ROOT_PASSWORD: 123695487q
+      REDIS_PASSWORD: 123321
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - default
+
+volumes:
+  mysql_data:
+  redis_data:
+  rabbitmq_data:

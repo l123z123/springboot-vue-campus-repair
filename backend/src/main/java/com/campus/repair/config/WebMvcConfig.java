@@ -1,0 +1,54 @@
+package com.campus.repair.config;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * Web MVC 配置 - 静态资源映射、JSON 响应 UTF-8
+ * ./uploads/ -> /files/**
+ */
+@Configuration
+public class WebMvcConfig implements WebMvcConfigurer {
+
+    @Value("${file.upload-path:./uploads/}")
+    private String uploadPath;
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOriginPatterns("http://localhost:*", "http://127.0.0.1:*")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
+                .allowedHeaders("Authorization", "Content-Type", "X-Request-Id")
+                .allowCredentials(true)
+                .maxAge(3600);
+    }
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        String path = uploadPath.startsWith("file:") ? uploadPath : "file:" + uploadPath;
+        if (!path.endsWith("/")) {
+            path += "/";
+        }
+        registry.addResourceHandler("/files/**")
+                .addResourceLocations(path);
+    }
+
+    @Override
+    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+        MappingJackson2HttpMessageConverter converter = new MappingJackson2HttpMessageConverter();
+        converter.setDefaultCharset(StandardCharsets.UTF_8);
+        converter.setSupportedMediaTypes(Collections.singletonList(
+                new MediaType("application", "json", StandardCharsets.UTF_8)));
+        converters.add(0, converter);
+    }
+}
