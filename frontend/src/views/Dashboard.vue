@@ -1,11 +1,5 @@
 <template>
   <div class="dashboard-page">
-    <header class="dashboard-header">
-      <el-button type="primary" link @click="router.push('/')">
-        <el-icon><ArrowLeft /></el-icon>
-      </el-button>
-      <span class="dashboard-header__title">数据看板</span>
-    </header>
     <div v-if="loading" class="dashboard-loading">
       <el-skeleton :rows="5" animated />
     </div>
@@ -20,13 +14,15 @@
           <div class="stat-card__label">累计工单</div>
         </div>
       </div>
-      <div class="chart-block">
-        <h4 class="chart-block__title">区域报修 Top10</h4>
-        <div ref="locationChartRef" class="chart-container"></div>
-      </div>
-      <div class="chart-block">
-        <h4 class="chart-block__title">工单状态分布</h4>
-        <div ref="statusChartRef" class="chart-container"></div>
+      <div class="charts-grid">
+        <div class="chart-block">
+          <h4 class="chart-block__title">区域报修 Top10</h4>
+          <div ref="locationChartRef" class="chart-container"></div>
+        </div>
+        <div class="chart-block">
+          <h4 class="chart-block__title">工单状态分布</h4>
+          <div ref="statusChartRef" class="chart-container"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -186,30 +182,14 @@ function renderStatusChart() {
 
 <style scoped>
 .dashboard-page {
-  min-height: 100vh;
-  background: var(--el-fill-color-lighter);
+  min-height: 400px;
 }
-.dashboard-header {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  background: var(--el-bg-color);
-  border-bottom: 1px solid var(--el-border-color-lighter);
-}
-.dashboard-header__title {
-  font-size: 16px;
-  font-weight: 500;
-}
-.dashboard-loading {
-  padding: 16px;
-}
-.dashboard-body {
-  padding: 16px;
-}
+.dashboard-loading { padding: 0; }
+.dashboard-body { padding: 0; }
 .stat-cards {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
   margin-bottom: 24px;
 }
 .stat-card {
@@ -228,10 +208,14 @@ function renderStatusChart() {
   color: var(--el-text-color-secondary);
   margin-top: 4px;
 }
+@media (min-width: 960px) {
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .charts-grid .chart-block { margin-bottom: 0; }
+}
 .chart-block {
   margin-bottom: 24px;
   padding: 16px;
-  background: var(--el-bg-color);
+  background: var(--el-fill-color-lighter);
   border-radius: 12px;
 }
 .chart-block__title {

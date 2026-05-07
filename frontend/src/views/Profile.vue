@@ -387,7 +387,7 @@ watch(activeTab, () => {
 
 <style scoped>
 .profile-page {
-  min-height: 100vh;
+  min-height: 400px;
   padding-bottom: 24px;
   background: var(--el-fill-color-lighter);
 }

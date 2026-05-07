@@ -171,8 +171,8 @@ async function submit() {
 
 <style scoped>
 .booking-page {
-  min-height: 100vh;
-  background: var(--el-fill-color-lighter);
+  min-height: 400px;
+  max-width: 640px;
 }
 .booking-header {
   display: flex;

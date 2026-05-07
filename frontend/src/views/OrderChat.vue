@@ -296,10 +296,9 @@ watch(
 
 <style lang="scss" scoped>
 .order-chat {
-  min-height: 100vh;
+  min-height: 420px;
   display: flex;
   flex-direction: column;
-  background: var(--el-bg-color);
 }
 .order-chat--staff {
   background: linear-gradient(180deg, #f0fdfa 0%, #f8fafc 35%, #f1f5f9 100%);
@@ -361,7 +360,7 @@ watch(
 }
 .oc-msg {
   margin-bottom: 16px;
-  max-width: 90%;
+  max-width: 520px;
   &.is-mine {
     margin-left: auto;
     text-align: right;
@@ -410,15 +409,12 @@ watch(
   overflow: hidden;
 }
 .order-chat__foot {
-  position: fixed;
-  left: 0;
-  right: 0;
+  position: sticky;
   bottom: 0;
-  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
-  background: var(--el-bg-color);
+  padding: 10px 0;
+  background: #fff;
   border-top: 1px solid var(--el-border-color-lighter);
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
-  z-index: 20;
+  z-index: 10;
 }
 .oc-pend {
   display: flex;

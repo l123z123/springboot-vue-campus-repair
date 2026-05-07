@@ -133,7 +133,7 @@ async function submitFeedback() {
 
 <style scoped>
 .help-page {
-  min-height: 100vh;
+  min-height: 400px;
   background: var(--el-fill-color-lighter);
 }
 .help-header {

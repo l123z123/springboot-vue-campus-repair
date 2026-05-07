@@ -195,9 +195,10 @@ onUnmounted(() => {
 
 <style scoped>
 .message-page {
-  min-height: 100vh;
-  background: var(--el-bg-color);
-  padding-bottom: 32px;
+  min-height: 400px;
+}
+@media (min-width: 960px) {
+  .message-page { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
 }
 .message-page--staff {
   background: linear-gradient(180deg, #f0fdfa 0%, #f8fafc 40%, #f1f5f9 100%);

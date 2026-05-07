@@ -51,7 +51,7 @@ const showPrivacy = ref(false)
 
 <style scoped>
 .settings-page {
-  min-height: 100vh;
+  min-height: 400px;
   background: var(--el-fill-color-lighter);
 }
 .settings-header {

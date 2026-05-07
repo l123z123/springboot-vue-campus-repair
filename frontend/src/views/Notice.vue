@@ -63,8 +63,7 @@ onMounted(() => {
 
 <style scoped>
 .notice-page {
-  min-height: 100vh;
-  background: var(--el-fill-color-lighter);
+  min-height: 400px;
 }
 .notice-page--staff {
   background: linear-gradient(180deg, #f0fdfa 0%, #f1f5f9 100%);
@@ -101,9 +100,8 @@ onMounted(() => {
   letter-spacing: 0.02em;
 }
 .notice-body {
-  padding: 16px;
-  max-width: 720px;
-  margin: 0 auto;
+  padding: 0;
+  max-width: 800px;
 }
 .notice-item {
   padding: 16px 16px 14px;

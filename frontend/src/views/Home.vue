@@ -157,7 +157,7 @@ const gridEntries = computed(() => {
 <style scoped>
 .home-page {
   padding: 24px 16px 80px 16px;
-  min-height: 100vh;
+  min-height: 400px;
   background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
 }
 

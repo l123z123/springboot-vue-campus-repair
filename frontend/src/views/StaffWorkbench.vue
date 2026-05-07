@@ -236,7 +236,7 @@ onUnmounted(() => {
 
 <style scoped>
 .staff-page {
-  min-height: 100vh;
+  min-height: 400px;
   padding: 0 0 calc(24px + env(safe-area-inset-bottom, 0));
   background: linear-gradient(180deg, #ecfeff 0%, #f1f5f9 32%, #f8fafc 100%);
   --staff-accent: #0d9488;

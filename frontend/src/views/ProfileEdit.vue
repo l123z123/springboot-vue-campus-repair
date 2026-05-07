@@ -217,7 +217,7 @@ const onSave = () => {
 
 <style scoped>
 .profile-edit-page {
-  min-height: 100vh;
+  min-height: 400px;
   background: var(--el-fill-color-lighter);
 }
 .edit-header {

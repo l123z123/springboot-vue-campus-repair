@@ -84,25 +84,25 @@ const routes = [
         path: 'home',
         name: 'Home',
         component: () => import('@/views/home/SmartHome.vue'),
-        meta: { showBottomNav: true }
+        meta: { title: '首页' }
       },
       {
         path: 'publish',
         name: 'Publish',
         component: () => import('@/views/Publish.vue'),
-        meta: { showBottomNav: true }
+        meta: { title: '发布报修' }
       },
       {
         path: 'repair/create',
         name: 'RepairCreate',
         component: () => import('@/views/Publish.vue'),
-        meta: { showBottomNav: true }
+        meta: { title: '发布报修' }
       },
       {
         path: 'message',
         name: 'Message',
         component: () => import('@/views/Message.vue'),
-        meta: { showBottomNav: true }
+        meta: { title: '消息中心' }
       },
       {
         path: 'message/:id',
@@ -112,55 +112,55 @@ const routes = [
         path: 'profile',
         name: 'Profile',
         component: () => import('@/views/Profile.vue'),
-        meta: { showBottomNav: true }
+        meta: { title: '个人中心' }
       },
       {
         path: 'profile/edit',
         name: 'ProfileEdit',
         component: () => import('@/views/ProfileEdit.vue'),
-        meta: { showBottomNav: false }
+        meta: { title: '编辑资料' }
       },
       {
         path: 'order/:id',
         name: 'OrderDetail',
         component: () => import('@/views/OrderDetail.vue'),
-        meta: { showBottomNav: false }
+        meta: { title: '工单详情' }
       },
       {
         path: 'repair/detail/:id',
         name: 'RepairDetail',
         component: () => import('@/views/OrderDetail.vue'),
-        meta: { showBottomNav: false }
+        meta: { title: '工单详情' }
       },
       {
         path: 'order-chat/:orderId',
         name: 'OrderChat',
         component: () => import('@/views/OrderChat.vue'),
-        meta: { showBottomNav: false, title: '沟通' }
+        meta: { title: '沟通' }
       },
       {
         path: 'settings',
         name: 'Settings',
         component: () => import('@/views/Settings.vue'),
-        meta: { showBottomNav: false }
+        meta: { title: '设置' }
       },
       {
         path: 'help',
         name: 'Help',
         component: () => import('@/views/Help.vue'),
-        meta: { showBottomNav: false }
+        meta: { title: '帮助反馈' }
       },
       {
         path: 'booking',
         name: 'Booking',
         component: () => import('@/views/Booking.vue'),
-        meta: { showBottomNav: false }
+        meta: { title: '预约维修' }
       },
       {
         path: 'notice',
         name: 'Notice',
         component: () => import('@/views/Notice.vue'),
-        meta: { showBottomNav: false }
+        meta: { title: '公告通知' }
       },
       {
         path: 'repair/history',
@@ -173,13 +173,13 @@ const routes = [
         path: 'staff/workbench',
         name: 'StaffWorkbench',
         component: () => import('@/views/StaffWorkbench.vue'),
-        meta: { showBottomNav: true }
+        meta: { title: '工作台' }
       },
       {
         path: 'staff/message',
         name: 'StaffMessage',
         component: () => import('@/views/Message.vue'),
-        meta: { showBottomNav: true }
+        meta: { title: '消息中心' }
       },
       {
         path: 'staff/message/:id',
@@ -189,7 +189,7 @@ const routes = [
         path: 'staff/notice',
         name: 'StaffNotice',
         component: () => import('@/views/Notice.vue'),
-        meta: { showBottomNav: true }
+        meta: { title: '公告通知' }
       }
     ]
   }

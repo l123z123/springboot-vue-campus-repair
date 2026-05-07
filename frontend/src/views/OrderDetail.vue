@@ -1,12 +1,5 @@
 <template>
   <div class="order-detail-page" :class="{ 'order-detail-page--staff': userRole === 1 }">
-    <header class="detail-header">
-      <el-button type="primary" link class="detail-header__back" @click="router.back()">
-        <el-icon><ArrowLeft /></el-icon>
-      </el-button>
-      <span class="detail-header__title">工单详情</span>
-    </header>
-
     <div v-if="loading" class="detail-content">
       <el-skeleton animated :rows="6" />
     </div>
@@ -746,12 +739,7 @@ function goChat() {
 
 <style scoped>
 .order-detail-page {
-  min-height: 100vh;
-  padding-bottom: 80px;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
-}
-.order-detail-page--staff {
-  background: linear-gradient(180deg, #f0fdfa 0%, #f1f5f9 28%, #e2e8f0 100%);
+  min-height: 400px;
 }
 .order-detail-page--staff .detail-block {
   box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
@@ -819,50 +807,8 @@ function goChat() {
   box-shadow: 0 8px 20px rgba(13, 148, 136, 0.4) !important;
 }
 
-/* 顶部导航栏 */
-.detail-header {
-  display: flex;
-  align-items: center;
-  padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--el-border-color-lighter);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-}
-
-.detail-header__back {
-  margin-right: 12px;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: var(--el-color-primary-light-9);
-  color: var(--el-color-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-}
-
-.detail-header__back:hover {
-  background: var(--el-color-primary-light-8);
-  transform: translateX(-3px);
-}
-
-.detail-header__title {
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  background: linear-gradient(135deg, var(--el-color-primary), #7c66f0);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
 .detail-content {
-  padding: 20px 16px;
+  padding: 0;
 }
 
 /* 图片展示区域 */
@@ -977,27 +923,17 @@ function goChat() {
 /* 联系师傅按钮 */
 .detail-chat-btn {
   width: 100%;
+  max-width: 320px;
   margin-top: 20px;
-  height: 52px;
-  font-size: 16px;
+  height: 44px;
+  font-size: 15px;
   font-weight: 600;
-  border-radius: 14px;
-  background: linear-gradient(135deg, var(--el-color-primary), #7c66f0);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-  transition: all 0.3s ease;
-  letter-spacing: 0.5px;
+  border-radius: 10px;
 }
 
-.detail-chat-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
-}
 .detail-chat-btn--staff {
   background: linear-gradient(135deg, #0d9488, #0f766e) !important;
-  box-shadow: 0 6px 20px rgba(13, 148, 136, 0.4) !important;
-}
-.detail-chat-btn--staff:hover {
-  box-shadow: 0 10px 28px rgba(13, 148, 136, 0.5) !important;
+  border: none !important;
 }
 
 /* 评价相关样式 */
@@ -1207,40 +1143,11 @@ function goChat() {
   box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
 }
 
-/* 响应式适配 */
-@media (max-width: 480px) {
-  .detail-content {
-    padding: 16px 14px;
-  }
-  
-  .detail-block {
-    padding: 16px;
-  }
-  
-  .detail-row:hover {
-    margin: 0 -8px;
-    padding: 12px 8px;
-  }
-}
-
 @media (min-width: 960px) {
-  .detail-header {
-    position: static;
-    margin-bottom: 18px;
-    border: 1px solid rgba(148, 163, 184, 0.18);
-    border-radius: 20px;
-    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
-  }
-
-  .detail-header__title {
-    font-size: 22px;
-  }
-
   .detail-content {
-    padding: 0;
     display: grid;
-    grid-template-columns: minmax(320px, 0.85fr) minmax(0, 1.15fr);
-    gap: 18px;
+    grid-template-columns: 340px minmax(0, 1fr);
+    gap: 24px;
     align-items: start;
   }
 
