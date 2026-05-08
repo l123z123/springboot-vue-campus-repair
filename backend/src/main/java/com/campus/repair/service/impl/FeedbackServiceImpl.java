@@ -72,6 +72,9 @@ public class FeedbackServiceImpl implements FeedbackService {
         }
         f.setStatus(status);
         f.setUpdateTime(LocalDateTime.now());
+        if (status != null && status == 1 && (f.getReply() == null || f.getReply().isEmpty())) {
+            f.setReply("已收到您的反馈并会及时进行处理");
+        }
         sysFeedbackMapper.updateById(f);
     }
 }

@@ -235,7 +235,8 @@ const currentStep = computed(() => {
   if (s <= 3) return 2
   if (s <= 5) return 3
   if (s <= 6) return 4
-  return 5
+  if (s <= 7) return 5
+  return 6
 })
 
 async function loadDetail() {

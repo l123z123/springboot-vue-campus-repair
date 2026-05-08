@@ -25,6 +25,11 @@ public class SysFeedback {
      */
     private Integer status;
 
+    /**
+     * 管理员回复
+     */
+    private String reply;
+
     private LocalDateTime createTime;
 
     private LocalDateTime updateTime;

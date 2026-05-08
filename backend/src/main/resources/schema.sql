@@ -143,6 +143,7 @@ CREATE TABLE `sys_feedback` (
   `content` varchar(500) NOT NULL COMMENT '反馈内容',
   `contact_info` varchar(50) DEFAULT NULL COMMENT '联系方式(手机/邮箱)',
   `status` tinyint DEFAULT 0 COMMENT '状态: 0-待处理, 1-已处理',
+  `reply` varchar(500) DEFAULT NULL COMMENT '管理员回复',
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),

@@ -28,17 +28,17 @@
 
       <el-card shadow="never" class="chart-card">
         <template #header><span class="chart-title">维修工绩效</span></template>
-        <el-table :data="staffPerformance" stripe border size="default">
+        <el-table :data="staffPerformance" stripe border size="default" style="width:100%">
           <template #empty><el-empty description="暂无数据" :image-size="60" /></template>
-          <el-table-column type="index" label="排名" width="60" />
-          <el-table-column prop="name" label="姓名" width="120" />
-          <el-table-column prop="count" label="完成工单数" width="120" sortable />
-          <el-table-column label="平均评分" width="140">
+          <el-table-column type="index" label="排名" width="60" align="center" />
+          <el-table-column prop="name" label="姓名" min-width="140" show-overflow-tooltip />
+          <el-table-column prop="count" label="完成工单数" min-width="120" sortable align="center" />
+          <el-table-column label="平均评分" min-width="200">
             <template #default="{row}">
               <el-rate :model-value="Number(row.rating)||0" :max="5" disabled size="small" show-text />
             </template>
           </el-table-column>
-          <el-table-column prop="avgTime" label="平均耗时" min-width="120" />
+          <el-table-column prop="avgTime" label="平均耗时" min-width="130" show-overflow-tooltip />
         </el-table>
       </el-card>
     </template>

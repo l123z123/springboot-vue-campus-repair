@@ -45,7 +45,11 @@
         <el-card shadow="never" class="help-card">
           <template #header><span>我的反馈记录</span></template>
           <div v-for="(item, i) in recentList" :key="i" class="recent-item">
-            <p class="recent-item__content">{{ item.content }}</p>
+            <div class="recent-item__head">
+              <p class="recent-item__content">{{ item.content }}</p>
+              <el-tag :type="item.status === 1 ? 'success' : 'warning'" size="small">{{ item.status === 1 ? '已处理' : '待处理' }}</el-tag>
+            </div>
+            <p v-if="item.reply && item.status === 1" class="recent-item__reply">{{ item.reply }}</p>
             <p class="recent-item__meta">{{ item.time }}{{ item.contact ? ' · ' + item.contact : '' }}</p>
           </div>
         </el-card>
@@ -90,7 +94,8 @@ const loadMyFeedback = async () => {
     const res = await getMyFeedback()
     const arr = Array.isArray(res) ? res : res?.data ?? []
     feedbackList.value = arr.map((item) => ({
-      content: item.content, contact: item.contactInfo, time: item.createTime
+      content: item.content, contact: item.contactInfo, time: item.createTime,
+      status: item.status, reply: item.reply, id: item.id
     }))
   } catch { feedbackList.value = [] }
 }
@@ -144,14 +149,32 @@ async function submitFeedback() {
 }
 .recent-item:last-child { border-bottom: none; }
 
+.recent-item__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
 .recent-item__content {
-  margin: 0 0 4px 0;
+  margin: 0;
   font-size: 14px;
   color: var(--el-text-color-primary);
+  flex: 1;
+}
+
+.recent-item__reply {
+  margin: 6px 0 4px 0;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: var(--el-color-success);
+  background: var(--el-color-success-light-9);
+  border-left: 3px solid var(--el-color-success);
+  border-radius: 4px;
 }
 
 .recent-item__meta {
-  margin: 0;
+  margin: 4px 0 0 0;
   font-size: 12px;
   color: var(--el-text-color-placeholder);
 }
