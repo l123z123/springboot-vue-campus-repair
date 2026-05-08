@@ -32,7 +32,8 @@
       <el-table-column label="紧急度" width="80" align="center">
         <template #default="{ row }">
           <el-tag v-if="row.isUrgent || row.urgency === 'high'" type="danger" size="small">紧急</el-tag>
-          <span v-else class="text-muted">普通</span>
+          <el-tag v-else-if="row.urgency === 'medium'" type="warning" size="small">中等</el-tag>
+          <el-tag v-else type="info" size="small">普通</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="状态" width="100">
@@ -141,8 +142,6 @@ onMounted(() => refreshAll())
 .ticket-tabs { margin-bottom: 16px; }
 
 .ticket-no-text { font-family: 'SF Mono', 'Cascadia Code', monospace; color: var(--el-color-primary); }
-.text-muted { color: var(--el-text-color-placeholder); font-size: 13px; }
-
 .pagination-wrap { margin-top: 16px; display: flex; justify-content: flex-end; }
 :deep(.el-table__row) { cursor: pointer; }
 </style>

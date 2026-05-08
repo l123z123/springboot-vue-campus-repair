@@ -184,9 +184,10 @@ async function fetchFeedbacks() {
     // 优先使用后端返回的 total，缺失时根据当前页数据估算，避免 Total 显示 0
     const rawTotal = data?.total != null ? Number(data.total) : -1
     total.value = rawTotal >= 0 ? rawTotal : (records.length > 0 ? Math.max(records.length, (currentPage.value - 1) * pageSize.value + records.length) : 0)
-  } catch {
+  } catch (e) {
     feedbackList.value = []
     total.value = 0
+    ElMessage.error(e?.message || '加载失败，请检查后端服务是否启动')
   } finally {
     loading.value = false
   }

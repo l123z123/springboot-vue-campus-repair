@@ -32,7 +32,7 @@
         <el-table-column prop="location" label="地点" min-width="150" show-overflow-tooltip />
         <el-table-column prop="description" label="描述" min-width="180" show-overflow-tooltip />
         <el-table-column label="紧急" width="70" align="center">
-          <template #default="{row}"><el-tag v-if="row.isUrgent" type="danger" size="small">紧急</el-tag><span v-else class="text-muted">普通</span></template>
+          <template #default="{row}"><el-tag v-if="row.isUrgent" type="danger" size="small">紧急</el-tag><el-tag v-else type="info" size="small">普通</el-tag></template>
         </el-table-column>
         <el-table-column label="操作" width="100">
           <template #default="{row}">
@@ -112,6 +112,5 @@ onMounted(loadData)
 .section-title { font-size:15px; font-weight:600; }
 
 .ticket-no { font-family:'SF Mono','Cascadia Code',monospace; color:var(--el-color-primary); }
-.text-muted { color:var(--el-text-color-placeholder); font-size:13px; }
 :deep(.el-table__row) { cursor:pointer; }
 </style>

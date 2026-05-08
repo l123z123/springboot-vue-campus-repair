@@ -58,14 +58,13 @@ public class GlobalExceptionHandler {
         return Result.error(400, "文件大小超过限制，请上传 10MB 以内的文件");
     }
 
-    @ExceptionHandler(RedisConnectionFailureException.class)
-    public Result<?> handleRedisFailure(RedisConnectionFailureException e) {
-        log.warn("Redis 连接失败: {}", e.getMessage());
-        return Result.error(503, "服务暂不可用，请稍后重试");
-    }
-
     @ExceptionHandler(DataAccessException.class)
     public Result<?> handleDataAccess(DataAccessException e) {
+        // RedisConnectionFailureException 已有各业务模块 try-catch 兜底，此处仅处理数据库异常
+        if (e instanceof RedisConnectionFailureException) {
+            log.warn("Redis 不可用（已有业务降级）: {}", e.getMessage());
+            return Result.error(500, "系统繁忙，请稍后重试");
+        }
         log.error("数据库异常", e);
         String msg = "数据库连接不可用。请确认：1) MySQL 容器已启动；2) 端口/账号密码配置正确；3) 数据库已初始化";
         return Result.error(503, msg);

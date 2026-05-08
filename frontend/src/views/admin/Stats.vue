@@ -38,7 +38,6 @@
               <el-rate :model-value="Number(row.rating)||0" :max="5" disabled size="small" show-text />
             </template>
           </el-table-column>
-          <el-table-column prop="avgTime" label="平均耗时" min-width="130" show-overflow-tooltip />
         </el-table>
       </el-card>
     </template>

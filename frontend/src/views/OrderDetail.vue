@@ -22,7 +22,7 @@
           <el-descriptions-item label="紧急程度">
             <el-tag v-if="order.isUrgent || order.urgency === 'high'" type="danger" size="small">紧急</el-tag>
             <el-tag v-else-if="order.urgency === 'medium'" type="warning" size="small">中等</el-tag>
-            <span v-else>普通</span>
+            <el-tag v-else type="info" size="small">普通</el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="报修人">{{ order.reporterName || '-' }}</el-descriptions-item>
           <el-descriptions-item label="联系电话">{{ order.phone || '-' }}</el-descriptions-item>
@@ -78,16 +78,33 @@
 
         <div v-if="order.status === 0 || order.status === 1 || order.status === 3" class="recommend-box">
           <div class="recommend-box__head">
-            <span>智能推荐</span>
+            <span>智能派单推荐（综合评分 + 推荐理由）</span>
             <el-button link type="primary" size="small" :loading="recommendLoading" @click="loadRecommendations">刷新</el-button>
           </div>
           <div v-if="recommendations.length" class="recommend-list">
-            <div v-for="r in recommendations.slice(0, 3)" :key="r.repairmanId" class="recommend-item" @click="useRecommendation(r.repairmanId)">
-              <div>
-                <strong>{{ r.realName || r.username }}</strong>
-                <span> · 在办{{ r.activeCount }}单 · 评分{{ r.score }}</span>
+            <div v-for="(r, idx) in recommendations.slice(0, 3)" :key="r.repairmanId" class="recommend-item" @click="useRecommendation(r.repairmanId)">
+              <div class="recommend-item__rank">
+                <span class="recommend-item__rank-num" :class="'rank-' + (idx + 1)">{{ idx + 1 }}</span>
               </div>
-              <el-button type="primary" plain size="small">采用</el-button>
+              <div class="recommend-item__body">
+                <div class="recommend-item__top">
+                  <strong class="recommend-item__name">{{ r.realName || r.username }}</strong>
+                  <span class="recommend-item__dept">{{ r.department || '' }}</span>
+                  <el-tag size="small" :type="r.score >= 120 ? 'success' : r.score >= 100 ? 'warning' : 'info'">{{ r.score }} 分</el-tag>
+                </div>
+                <div class="recommend-item__stats">
+                  <span>在办 <b>{{ r.activeCount }}</b> 单</span>
+                  <span v-if="r.averageScore > 0" class="stat-sep">|</span>
+                  <span v-if="r.averageScore > 0">历史评分 <b>{{ r.averageScore.toFixed(1) }}</b></span>
+                </div>
+                <div v-if="r.reasons && r.reasons.length" class="recommend-item__reasons">
+                  <span v-for="(reason, ri) in r.reasons" :key="ri" class="recommend-item__reason">
+                    <el-icon :size="12"><Check /></el-icon>
+                    {{ reason }}
+                  </span>
+                </div>
+              </div>
+              <el-button type="primary" size="small" @click.stop="useRecommendation(r.repairmanId)">采用</el-button>
             </div>
           </div>
           <el-empty v-else description="暂无推荐" :image-size="40" />
@@ -189,7 +206,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ChatDotRound } from '@element-plus/icons-vue'
+import { ChatDotRound, Check } from '@element-plus/icons-vue'
 import { getRepairDetail, submitEvaluation as apiSubmitEvaluation, getEvaluation,
   auditOrder, dispatchOrder, acceptOrder, completeOrder, confirmOrder, getDispatchRecommendations } from '@/api/repair'
 import { getAdminUserList } from '@/api/adminUser'
@@ -252,7 +269,7 @@ async function loadDetail() {
         status: sc,
         image: data.image || '', images: data.images || [],
         date: data.date || '', worker: data.repairmanName || '待分配',
-        repairmanId: data.repairmanId, isUrgent: !!data.isUrgent,
+        repairmanId: data.repairmanId, isUrgent: !!data.isUrgent, urgency: data.urgency,
         category: data.category || '', reporterName: data.reporterName || '',
         phone: data.phone || data.phoneNumber || '',
         createTime: data.createTime || '', auditTime: data.auditTime || '',
@@ -355,10 +372,25 @@ watch(orderId, () => { loadDetail(); loadRecommendations() })
 
 .admin-hint { margin:0 0 14px 0; font-size:13px; color:var(--el-text-color-secondary); }
 
-.recommend-box { padding:14px; border:1px solid var(--el-border-color-lighter); border-radius:8px; background:var(--el-fill-color-lighter); margin-bottom:4px; }
-.recommend-box__head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; font-weight:600; }
-.recommend-list { display:grid; gap:8px; }
-.recommend-item { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 12px; background:#fff; border:1px solid var(--el-border-color-lighter); border-radius:8px; cursor:pointer; }
+.recommend-box { padding:16px; border:1px solid var(--el-border-color-lighter); border-radius:8px; background:var(--el-fill-color-lighter); margin-bottom:4px; }
+.recommend-box__head { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; font-size:14px; font-weight:600; }
+.recommend-list { display:grid; gap:10px; max-height:500px; overflow-y:auto; }
+.recommend-item { display:flex; align-items:flex-start; gap:14px; padding:14px 16px; background:#fff; border:1px solid var(--el-border-color-lighter); border-radius:10px; cursor:pointer; transition:all 0.2s; }
+.recommend-item:hover { border-color:var(--el-color-primary); box-shadow:0 2px 8px rgba(var(--el-color-primary-rgb),0.12); }
+.recommend-item__rank { flex-shrink:0; }
+.recommend-item__rank-num { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; font-size:13px; font-weight:700; color:#fff; }
+.rank-1 { background:linear-gradient(135deg,#f56c6c,#e74c3c); }
+.rank-2 { background:linear-gradient(135deg,#e6a23c,#f39c12); }
+.rank-3 { background:linear-gradient(135deg,#67c23a,#27ae60); }
+.recommend-item__body { flex:1; min-width:0; }
+.recommend-item__top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+.recommend-item__name { font-size:15px; color:var(--el-text-color-primary); }
+.recommend-item__dept { font-size:12px; color:var(--el-text-color-placeholder); }
+.recommend-item__stats { font-size:12px; color:var(--el-text-color-secondary); margin-bottom:6px; }
+.recommend-item__stats b { color:var(--el-text-color-primary); }
+.stat-sep { margin:0 6px; color:var(--el-border-color); }
+.recommend-item__reasons { display:flex; flex-wrap:wrap; gap:4px 8px; }
+.recommend-item__reason { display:inline-flex; align-items:center; gap:3px; font-size:12px; color:var(--el-text-color-secondary); background:var(--el-fill-color); padding:2px 8px; border-radius:4px; }
 
 .eval-comment { margin:12px 0; padding:12px; background:var(--el-fill-color-lighter); border-radius:8px; font-size:14px; line-height:1.7; }
 .eval-meta { display:flex; justify-content:space-between; align-items:center; padding-top:10px; border-top:1px solid var(--el-border-color-lighter); margin-top:8px; }

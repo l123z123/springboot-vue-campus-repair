@@ -3,11 +3,13 @@ package com.campus.repair.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.campus.repair.common.BusinessException;
 import com.campus.repair.entity.SysFeedback;
 import com.campus.repair.mapper.SysFeedbackMapper;
 import com.campus.repair.service.FeedbackService;
 import org.springframework.util.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -65,10 +67,11 @@ public class FeedbackServiceImpl implements FeedbackService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateStatus(Long id, Integer status) {
         SysFeedback f = sysFeedbackMapper.selectById(id);
         if (f == null) {
-            return;
+            throw new BusinessException("反馈记录不存在");
         }
         f.setStatus(status);
         f.setUpdateTime(LocalDateTime.now());

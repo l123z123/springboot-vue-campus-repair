@@ -1,12 +1,5 @@
 <template>
   <div class="admin-users">
-    <el-alert
-      class="user-page-tip"
-      type="info"
-      :closable="false"
-      show-icon
-      title="与需求一致：维修工账号由管理员创建；学生可自助注册。本页「新增」仅可创建学生或维修工，不可创建管理员账号。"
-    />
     <div class="user-filter-bar">
       <div class="filter-item filter-item--keyword">
         <el-input
@@ -397,9 +390,6 @@ onMounted(() => {
   min-height: 400px;
 }
 
-.user-page-tip {
-  margin-bottom: 12px;
-}
 
 .form-muted {
   font-size: 12px;

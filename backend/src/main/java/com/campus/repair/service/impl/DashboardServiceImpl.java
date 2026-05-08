@@ -3,11 +3,14 @@ package com.campus.repair.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.campus.repair.entity.RepairEvaluation;
 import com.campus.repair.entity.RepairOrder;
+import com.campus.repair.entity.SysUser;
 import com.campus.repair.enums.RepairOrderStatus;
 import com.campus.repair.mapper.RepairEvaluationMapper;
 import com.campus.repair.mapper.RepairOrderMapper;
+import com.campus.repair.mapper.SysUserMapper;
 import com.campus.repair.service.DashboardService;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -23,10 +26,12 @@ public class DashboardServiceImpl implements DashboardService {
 
     private final RepairOrderMapper repairOrderMapper;
     private final RepairEvaluationMapper evaluationMapper;
+    private final SysUserMapper userMapper;
 
-    public DashboardServiceImpl(RepairOrderMapper repairOrderMapper, RepairEvaluationMapper evaluationMapper) {
+    public DashboardServiceImpl(RepairOrderMapper repairOrderMapper, RepairEvaluationMapper evaluationMapper, SysUserMapper userMapper) {
         this.repairOrderMapper = repairOrderMapper;
         this.evaluationMapper = evaluationMapper;
+        this.userMapper = userMapper;
     }
 
     @Override
@@ -225,6 +230,18 @@ public class DashboardServiceImpl implements DashboardService {
             }
         }
 
+        // 批量查询维修工真实姓名
+        Map<Long, String> nameMap = new HashMap<>();
+        if (!repairmanIds.isEmpty()) {
+            List<SysUser> workers = userMapper.selectBatchIds(repairmanIds);
+            for (SysUser w : workers) {
+                String display = w.getRealName();
+                if (!StringUtils.hasText(display)) display = w.getNickname();
+                if (!StringUtils.hasText(display)) display = w.getUsername();
+                nameMap.put(w.getUserId(), display);
+            }
+        }
+
         return countMap.entrySet().stream()
                 .sorted((a, b) -> Long.compare(b.getValue(), a.getValue()))
                 .map(e -> {
@@ -232,7 +249,7 @@ public class DashboardServiceImpl implements DashboardService {
                     Long cnt = e.getValue();
                     Map<String, Object> m = new HashMap<>();
                     m.put("repairmanId", repairmanId);
-                    m.put("name", "维修员" + (repairmanId != null ? repairmanId : ""));
+                    m.put("name", nameMap.getOrDefault(repairmanId, "维修工#" + repairmanId));
                     m.put("count", cnt);
                     m.put("rating", ratingMap.getOrDefault(repairmanId, 0.0));
                     return m;

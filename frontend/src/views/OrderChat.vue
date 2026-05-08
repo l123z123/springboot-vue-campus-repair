@@ -9,7 +9,7 @@
 
     <el-alert
       v-if="role === 2"
-      type="info"
+      type="warning"
       :closable="false"
       show-icon
       class="order-chat__admin-hint"
