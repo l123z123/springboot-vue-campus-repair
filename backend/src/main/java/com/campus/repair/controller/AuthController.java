@@ -82,18 +82,8 @@ public class AuthController {
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
-            // 数据库等基础设施异常时，为保证演示环境可用，为 admin/123456 提供内存兜底账号
-            log.error("登录过程出现异常，将尝试兜底账号: {}", e.getMessage());
-            if ("admin".equals(request.getUsername()) && "123456".equals(request.getPassword())) {
-                user = new SysUser();
-                user.setUserId(3L);
-                user.setUsername("admin");
-                user.setNickname("系统管理员");
-                user.setRole(2);
-                user.setStatus(1);
-            } else {
-                throw new BusinessException("系统繁忙，请稍后重试");
-            }
+            log.error("登录过程出现异常: {}", e.getMessage(), e);
+            throw new BusinessException("系统繁忙，请稍后重试");
         }
 
         return Result.success(buildLoginResponse(user));

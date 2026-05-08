@@ -2,7 +2,7 @@
   <div class="staff-tickets">
     <el-row :gutter="16" class="stat-row">
       <el-col :span="8" v-for="card in statCards" :key="card.key">
-        <div class="stat-card" @click="activeTab = card.filterTab">
+        <div class="stat-card" @click="switchTab(card.filterTab)">
           <div class="stat-card__value">{{ card.value }}</div>
           <div class="stat-card__label">{{ card.label }}</div>
         </div>
@@ -15,7 +15,7 @@
       <el-tab-pane label="已完成" name="done" />
     </el-tabs>
 
-    <el-table :data="filteredRecords" stripe border size="default" v-loading="loading" highlight-current-row @row-click="goDetail">
+    <el-table :data="records" stripe border size="default" v-loading="loading" highlight-current-row @row-click="goDetail">
       <template #empty>
         <el-empty description="暂无工单" :image-size="80" />
       </template>
@@ -27,9 +27,7 @@
       <el-table-column prop="location" label="报修地点" min-width="150" show-overflow-tooltip />
       <el-table-column prop="description" label="故障描述" min-width="180" show-overflow-tooltip />
       <el-table-column label="报修人" width="100">
-        <template #default="{ row }">
-          {{ row.reporterName || row.studentName || '-' }}
-        </template>
+        <template #default="{ row }">{{ row.reporterName || row.studentName || '-' }}</template>
       </el-table-column>
       <el-table-column label="紧急度" width="80" align="center">
         <template #default="{ row }">
@@ -75,27 +73,34 @@ const pageSize = 10
 const total = ref(0)
 const activeTab = ref('pending')
 
+const TAB_STATUS_MAP = { pending: '4', processing: '5', done: '6,7,8' }
+
 const statCards = computed(() => {
-  const list = records.value
-  const pending = list.filter(r => r.statusCode === 4).length
-  const processing = list.filter(r => r.statusCode === 5).length
-  const done = list.filter(r => r.statusCode >= 6 && r.statusCode <= 8).length
   return [
-    { key: 'pending', label: '待接单', value: pending, filterTab: 'pending' },
-    { key: 'processing', label: '维修中', value: processing, filterTab: 'processing' },
-    { key: 'done', label: '已完成', value: done, filterTab: 'done' }
+    { key: 'pending', label: '待接单', value: tabCounts.value.pending, filterTab: 'pending' },
+    { key: 'processing', label: '维修中', value: tabCounts.value.processing, filterTab: 'processing' },
+    { key: 'done', label: '已完成', value: tabCounts.value.done, filterTab: 'done' }
   ]
 })
 
-const filteredRecords = computed(() => {
-  const map = { pending: [4], processing: [5], done: [6, 7, 8] }
-  return records.value.filter(r => (map[activeTab.value] || []).includes(r.statusCode))
-})
+const tabCounts = ref({ pending: 0, processing: 0, done: 0 })
+
+async function loadCounts() {
+  try {
+    const [p, r, d] = await Promise.all([
+      getRepairListPage({ page: 1, size: 1, statusIn: '4' }),
+      getRepairListPage({ page: 1, size: 1, statusIn: '5' }),
+      getRepairListPage({ page: 1, size: 1, statusIn: '6,7,8' })
+    ])
+    tabCounts.value = { pending: p.total || 0, processing: r.total || 0, done: d.total || 0 }
+  } catch {}
+}
 
 async function loadData() {
   loading.value = true
   try {
-    const res = await getRepairListPage({ page: page.value, size: pageSize })
+    const statusIn = TAB_STATUS_MAP[activeTab.value]
+    const res = await getRepairListPage({ page: page.value, size: pageSize, statusIn })
     records.value = res.records || []
     total.value = res.total || 0
   } catch (e) {
@@ -104,17 +109,19 @@ async function loadData() {
 }
 
 async function handleAccept(row) {
-  try { await acceptOrder(row.id); ElMessage.success('已接单'); await loadData() }
+  try { await acceptOrder(row.id); ElMessage.success('已接单'); await refreshAll() }
   catch (e) { ElMessage.error(e?.message || '操作失败') }
 }
 async function handleComplete(row) {
-  try { await completeOrder(row.id); ElMessage.success('已标记完成'); await loadData() }
+  try { await completeOrder(row.id); ElMessage.success('已标记完成'); await refreshAll() }
   catch (e) { ElMessage.error(e?.message || '操作失败') }
 }
 function goDetail(row) { if (row?.id) router.push({ name: 'RepairDetail', params: { id: String(row.id) } }) }
-function onTabChange() { page.value = 1; loadData() }
+function onTabChange() { page.value = 1; loadData(); loadCounts() }
+function switchTab(tab) { activeTab.value = tab; onTabChange() }
+async function refreshAll() { await Promise.all([loadData(), loadCounts()]) }
 
-onMounted(() => loadData())
+onMounted(() => refreshAll())
 </script>
 
 <style scoped>

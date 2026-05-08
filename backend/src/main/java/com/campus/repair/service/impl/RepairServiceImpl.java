@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 报修业务实现：防重、分页、状态流转、WebSocket 通知
@@ -281,23 +282,31 @@ public class RepairServiceImpl implements RepairService {
         return out;
     }
 
-    /** 列表页填充报修人/维修工姓名，避免前端退化为「用户+userId」 */
+    /** 列表页填充报修人/维修工姓名，批量查询避免 N+1 */
     private void enrichUserNamesForList(List<RepairOrder> records) {
         if (records == null || records.isEmpty()) {
             return;
         }
-        for (RepairOrder order : records) {
-            if (order.getUserId() != null) {
-                SysUser u = sysUserMapper.selectById(order.getUserId());
-                if (u != null) {
-                    order.setStudentName(firstName(u.getRealName(), u.getNickname(), u.getUsername()));
-                }
+        List<Long> userIds = new ArrayList<>();
+        for (RepairOrder o : records) {
+            if (o.getUserId() != null) userIds.add(o.getUserId());
+            if (o.getRepairmanId() != null) userIds.add(o.getRepairmanId());
+        }
+        Map<Long, SysUser> userMap = new HashMap<>();
+        if (!userIds.isEmpty()) {
+            List<SysUser> users = sysUserMapper.selectBatchIds(userIds.stream().distinct().collect(Collectors.toList()));
+            for (SysUser u : users) {
+                userMap.put(u.getUserId(), u);
             }
-            if (order.getRepairmanId() != null) {
-                SysUser w = sysUserMapper.selectById(order.getRepairmanId());
-                if (w != null) {
-                    order.setRepairmanName(firstName(w.getRealName(), w.getNickname(), w.getUsername()));
-                }
+        }
+        for (RepairOrder order : records) {
+            SysUser student = order.getUserId() != null ? userMap.get(order.getUserId()) : null;
+            if (student != null) {
+                order.setStudentName(firstName(student.getRealName(), student.getNickname(), student.getUsername()));
+            }
+            SysUser worker = order.getRepairmanId() != null ? userMap.get(order.getRepairmanId()) : null;
+            if (worker != null) {
+                order.setRepairmanName(firstName(worker.getRealName(), worker.getNickname(), worker.getUsername()));
             }
         }
     }
@@ -329,17 +338,22 @@ public class RepairServiceImpl implements RepairService {
     }
 
     private void enrichUserNamesForDetail(RepairOrder order) {
-        if (order.getUserId() != null) {
-            SysUser u = sysUserMapper.selectById(order.getUserId());
-            if (u != null) {
-                order.setStudentName(firstName(u.getRealName(), u.getNickname(), u.getUsername()));
-            }
+        List<Long> ids = new ArrayList<>();
+        if (order.getUserId() != null) ids.add(order.getUserId());
+        if (order.getRepairmanId() != null) ids.add(order.getRepairmanId());
+        if (ids.isEmpty()) return;
+        List<SysUser> users = sysUserMapper.selectBatchIds(ids);
+        Map<Long, SysUser> userMap = new HashMap<>();
+        for (SysUser u : users) {
+            userMap.put(u.getUserId(), u);
         }
-        if (order.getRepairmanId() != null) {
-            SysUser w = sysUserMapper.selectById(order.getRepairmanId());
-            if (w != null) {
-                order.setRepairmanName(firstName(w.getRealName(), w.getNickname(), w.getUsername()));
-            }
+        SysUser student = order.getUserId() != null ? userMap.get(order.getUserId()) : null;
+        if (student != null) {
+            order.setStudentName(firstName(student.getRealName(), student.getNickname(), student.getUsername()));
+        }
+        SysUser worker = order.getRepairmanId() != null ? userMap.get(order.getRepairmanId()) : null;
+        if (worker != null) {
+            order.setRepairmanName(firstName(worker.getRealName(), worker.getNickname(), worker.getUsername()));
         }
     }
 

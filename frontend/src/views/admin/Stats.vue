@@ -14,7 +14,7 @@
       <el-row :gutter="16" class="chart-row">
         <el-col :span="12">
           <el-card shadow="never" class="chart-card">
-            <template #header><span class="chart-title">报修趋势（近30天）</span></template>
+            <template #header><span class="chart-title">报修区域分布 TOP10</span></template>
             <div ref="trendChartRef" class="chart-box"></div>
           </el-card>
         </el-col>

@@ -8,7 +8,7 @@
       <div class="detail-header">
         <div class="detail-header__left">
           <span class="detail-header__id">工单 #{{ order.ticketNo || order.id }}</span>
-          <el-tag :type="statusTagType(order.status)" size="large">{{ order.statusText }}</el-tag>
+          <el-tag :type="getStatusTagType(order.status)" size="large">{{ getRepairStatusLabel(order.status) }}</el-tag>
           <el-tag v-if="order.isUrgent" type="danger" size="large" effect="dark">紧急</el-tag>
         </div>
         <span class="detail-header__time">提交于 {{ order.createTime || order.date }}</span>
@@ -225,12 +225,7 @@ const repairmanOptions = ref([])
 const recommendations = ref([])
 const recommendLoading = ref(false)
 
-const STATUS_TEXT = { 0:'待审核',1:'审核中',2:'已审核',3:'待派单',4:'已派单',5:'维修中',6:'维修完成',7:'学生确认',8:'已评价',9:'已拒绝',10:'已取消' }
-
-function statusTagType(s) {
-  const map = { 0:'info',1:'warning',3:'info',4:'warning',5:'',6:'success',7:'success',8:'success',9:'danger',10:'danger' }
-  return map[s] || 'info'
-}
+function currentStatusLabel() { return getRepairStatusLabel(order.value.status) }
 
 const currentStep = computed(() => {
   const s = order.value.status
@@ -253,7 +248,7 @@ async function loadDetail() {
       order.value = {
         id: data.id || data.orderId, ticketNo: data.ticketNo || '',
         location: data.location || '', desc: data.description || '',
-        status: sc, statusText: STATUS_TEXT[sc] || '',
+        status: sc,
         image: data.image || '', images: data.images || [],
         date: data.date || '', worker: data.repairmanName || '待分配',
         repairmanId: data.repairmanId, isUrgent: !!data.isUrgent,

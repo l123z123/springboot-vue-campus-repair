@@ -150,4 +150,19 @@ CREATE TABLE `sys_feedback` (
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统反馈表';
 
+-- ----------------------------
+-- sys_notice 公告表
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_notice`;
+CREATE TABLE `sys_notice` (
+  `id` bigint NOT NULL COMMENT '主键',
+  `title` varchar(100) NOT NULL COMMENT '公告标题',
+  `content` varchar(500) NOT NULL COMMENT '公告内容',
+  `author` varchar(50) DEFAULT '后勤管理处' COMMENT '发布者',
+  `pinned` tinyint DEFAULT '0' COMMENT '0-普通 1-置顶',
+  `create_time` datetime DEFAULT NULL COMMENT '发布时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_pinned_time` (`pinned`, `create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='系统公告表';
+
 SET FOREIGN_KEY_CHECKS = 1;

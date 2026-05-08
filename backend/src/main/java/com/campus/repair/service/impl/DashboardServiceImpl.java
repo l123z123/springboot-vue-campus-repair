@@ -1,14 +1,17 @@
 package com.campus.repair.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.campus.repair.entity.RepairEvaluation;
 import com.campus.repair.entity.RepairOrder;
 import com.campus.repair.enums.RepairOrderStatus;
+import com.campus.repair.mapper.RepairEvaluationMapper;
 import com.campus.repair.mapper.RepairOrderMapper;
 import com.campus.repair.service.DashboardService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -19,9 +22,11 @@ import java.util.stream.Collectors;
 public class DashboardServiceImpl implements DashboardService {
 
     private final RepairOrderMapper repairOrderMapper;
+    private final RepairEvaluationMapper evaluationMapper;
 
-    public DashboardServiceImpl(RepairOrderMapper repairOrderMapper) {
+    public DashboardServiceImpl(RepairOrderMapper repairOrderMapper, RepairEvaluationMapper evaluationMapper) {
         this.repairOrderMapper = repairOrderMapper;
+        this.evaluationMapper = evaluationMapper;
     }
 
     @Override
@@ -196,6 +201,30 @@ public class DashboardServiceImpl implements DashboardService {
         Map<Long, Long> countMap = done.stream()
                 .collect(Collectors.groupingBy(RepairOrder::getRepairmanId, Collectors.counting()));
 
+        // 批量查询评价均分
+        List<Long> repairmanIds = countMap.keySet().stream().distinct().collect(Collectors.toList());
+        Map<Long, Double> ratingMap = new HashMap<>();
+        if (!repairmanIds.isEmpty()) {
+            List<RepairEvaluation> evals = evaluationMapper.selectList(
+                new LambdaQueryWrapper<RepairEvaluation>().in(RepairEvaluation::getOrderId,
+                    done.stream().map(RepairOrder::getOrderId).collect(Collectors.toList())));
+            Map<Long, List<RepairEvaluation>> evalByRepairman = new HashMap<>();
+            for (RepairEvaluation ev : evals) {
+                Long rid = done.stream()
+                    .filter(o -> o.getOrderId().equals(ev.getOrderId()))
+                    .findFirst().map(RepairOrder::getRepairmanId).orElse(null);
+                if (rid != null) {
+                    evalByRepairman.computeIfAbsent(rid, k -> new ArrayList<>()).add(ev);
+                }
+            }
+            for (Map.Entry<Long, List<RepairEvaluation>> entry : evalByRepairman.entrySet()) {
+                double avg = entry.getValue().stream()
+                    .mapToInt(RepairEvaluation::getScore)
+                    .average().orElse(0);
+                ratingMap.put(entry.getKey(), Math.round(avg * 10) / 10.0);
+            }
+        }
+
         return countMap.entrySet().stream()
                 .sorted((a, b) -> Long.compare(b.getValue(), a.getValue()))
                 .map(e -> {
@@ -205,8 +234,7 @@ public class DashboardServiceImpl implements DashboardService {
                     m.put("repairmanId", repairmanId);
                     m.put("name", "维修员" + (repairmanId != null ? repairmanId : ""));
                     m.put("count", cnt);
-                    // 占位评分，后续可从评价表计算
-                    m.put("rating", 0);
+                    m.put("rating", ratingMap.getOrDefault(repairmanId, 0.0));
                     return m;
                 })
                 .collect(Collectors.toList());

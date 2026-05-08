@@ -29,19 +29,7 @@
                 <div class="dashboard-stat-card__label">{{ card.label }}</div>
                 <div class="dashboard-stat-card__value">{{ card.value }}</div>
               </div>
-              <div
-                class="dashboard-stat-card__trend"
-                :class="{ 'is-up': card.trend >= 0, 'is-down': card.trend < 0 }"
-              >
-                <el-icon v-if="card.trend >= 0"><CaretTop /></el-icon>
-                <el-icon v-else><CaretBottom /></el-icon>
-                <span>{{ Math.abs(card.trend) }}%</span>
-              </div>
             </div>
-            <div
-              class="dashboard-stat-card__sparkline"
-              :ref="(el) => setSparklineRef(card.key, el)"
-            />
           </el-card>
         </el-col>
       </el-row>
@@ -202,17 +190,6 @@ const detailVisible = ref(false)
 const detailLoading = ref(false)
 const currentOrder = ref({})
 
-// 迷你折线图相关
-const sparklineRefs = ref({})
-const sparklineCharts = ref({})
-// 简单的 7 日趋势 mock 数据，占位用，后续可从后端统计接口获取
-const sparklineData = ref({
-  total: [60, 72, 80, 65, 90, 110, 95],
-  pending: [20, 18, 25, 22, 28, 26, 24],
-  completed: [30, 40, 38, 45, 55, 60, 58],
-  urgent: [5, 6, 7, 6, 8, 9, 7]
-})
-
 const userDisplayName = computed(() => {
   const u = userStore.userInfo
   return (u && (u.realName || u.username)) || '管理员'
@@ -229,28 +206,24 @@ const statCards = computed(() => [
     key: 'total',
     label: '总工单数',
     value: stats.value.totalCount ?? 0,
-    trend: 12,
     icon: DataLine
   },
   {
     key: 'pending',
     label: '待处理',
     value: stats.value.pendingCount ?? 0,
-    trend: -5,
     icon: List
   },
   {
     key: 'completed',
     label: '已完成',
     value: stats.value.completedCount ?? 0,
-    trend: 18,
     icon: Check
   },
   {
     key: 'urgent',
     label: '紧急工单',
     value: stats.value.urgentCount ?? 0,
-    trend: 3,
     icon: Warning
   }
 ])
@@ -264,48 +237,6 @@ function urgencyLabel(u) {
 function urgencyTagType(u) {
   const map = { 1: 'info', 2: 'warning', 3: 'danger', low: 'info', medium: 'warning', high: 'danger' }
   return map[u] ?? 'info'
-}
-
-function setSparklineRef(key, el) {
-  if (!el) return
-  if (!sparklineRefs.value[key]) {
-    sparklineRefs.value[key] = el
-  }
-}
-
-function initSparkline(key) {
-  const el = sparklineRefs.value[key]
-  if (!el) return
-  if (!sparklineCharts.value[key]) {
-    sparklineCharts.value[key] = echarts.init(el)
-  }
-  const chart = sparklineCharts.value[key]
-  const data = sparklineData.value[key] || []
-  chart.setOption({
-    grid: { top: 4, bottom: 0, left: 0, right: 0 },
-    xAxis: {
-      type: 'category',
-      show: false,
-      data: data.map((_, idx) => idx + 1)
-    },
-    yAxis: { type: 'value', show: false },
-    tooltip: { show: false },
-    series: [
-      {
-        type: 'line',
-        smooth: true,
-        showSymbol: false,
-        data,
-        lineStyle: { width: 2, color: '#6366F1' },
-        areaStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(99,102,241,0.35)' },
-            { offset: 1, color: 'rgba(99,102,241,0.02)' }
-          ])
-        }
-      }
-    ]
-  })
 }
 
 function pendingRowClassName() {
@@ -382,7 +313,6 @@ onMounted(async () => {
   }
 
   // 初始化迷你趋势图
-  statCards.value.forEach((card) => initSparkline(card.key))
 })
 </script>
 

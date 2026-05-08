@@ -10,7 +10,7 @@
         >
           <el-icon><component :is="sidebarCollapsed ? Fold : Expand" /></el-icon>
         </el-button>
-        <span class="admin-header__title">校园保修管理系统</span>
+        <span class="admin-header__title">校园报修管理系统</span>
       </div>
       <div class="admin-header__right">
         <el-popover

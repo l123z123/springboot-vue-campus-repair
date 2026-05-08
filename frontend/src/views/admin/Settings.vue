@@ -1,17 +1,15 @@
 <template>
   <div class="admin-settings">
     <el-card class="settings-card" shadow="never">
-      <template #header>
-        <span>基础设置</span>
-      </template>
+      <template #header><span>基础设置</span></template>
       <el-form :model="form" label-width="120px" class="settings-form">
         <el-row :gutter="24">
-          <el-col :xs="24" :sm="24" :md="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="系统名称">
               <el-input v-model="form.systemName" placeholder="请输入系统名称" />
             </el-form-item>
           </el-col>
-          <el-col :xs="24" :sm="24" :md="12">
+          <el-col :xs="24" :md="12">
             <el-form-item label="Logo 上传">
               <el-upload
                 class="logo-uploader"
@@ -31,59 +29,69 @@
               </el-upload>
             </el-form-item>
           </el-col>
+        </el-row>
+      </el-form>
+    </el-card>
+
+    <el-card class="settings-card" shadow="never">
+      <template #header><span>发布公告</span></template>
+      <el-form :model="announceForm" label-width="100px" class="announce-form">
+        <el-row :gutter="24">
+          <el-col :xs="24" :md="16">
+            <el-form-item label="公告标题">
+              <el-input v-model="announceForm.title" placeholder="请输入公告标题" maxlength="100" show-word-limit />
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :md="8">
+            <el-form-item label="发布者">
+              <el-input v-model="announceForm.author" placeholder="后勤管理处" maxlength="20" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="24">
           <el-col :span="24">
             <el-form-item label="公告内容">
-              <el-input
-                v-model="form.announcement"
-                type="textarea"
-                :rows="4"
-                placeholder="请输入系统公告内容"
-                maxlength="500"
-                show-word-limit
-              />
+              <el-input v-model="announceForm.content" type="textarea" :rows="4" placeholder="请输入公告内容" maxlength="500" show-word-limit />
             </el-form-item>
           </el-col>
         </el-row>
-      </el-form>
-    </el-card>
-
-    <el-card class="settings-card" shadow="never">
-      <template #header>
-        <span>工单规则</span>
-      </template>
-      <el-form :model="form" label-width="120px" class="settings-form">
-        <el-row :gutter="24">
-          <el-col :xs="24" :sm="24" :md="12">
-            <el-form-item label="是否开启审核">
-              <el-switch v-model="form.auditEnabled" />
-              <span class="form-tip">开启后，工单需审核通过方可分配</span>
-            </el-form-item>
-          </el-col>
-          <el-col :xs="24" :sm="24" :md="12">
-            <el-form-item label="自动分配开关">
-              <el-switch v-model="form.autoAssignEnabled" />
-              <span class="form-tip">开启后，新工单自动分配给空闲维修工</span>
-            </el-form-item>
-          </el-col>
-          <el-col :xs="24" :sm="24" :md="12">
-            <el-form-item label="超时提醒时间">
-              <el-input-number
-                v-model="form.timeoutMinutes"
-                :min="0"
-                :max="1440"
-                placeholder="分钟"
-              />
-              <span class="form-tip">工单超过此时间未处理将发送提醒（0 表示不提醒）</span>
+        <el-row>
+          <el-col :span="24">
+            <el-form-item label="置顶">
+              <el-switch v-model="announceForm.pinned" />
             </el-form-item>
           </el-col>
         </el-row>
+        <el-row>
+          <el-col :span="24">
+            <el-button type="primary" :loading="publishing" @click="publishAnnouncement">发布公告</el-button>
+          </el-col>
+        </el-row>
       </el-form>
+
+      <el-divider />
+      <div class="notice-manage-head">
+        <span class="notice-manage-head__title">已发布公告（{{ noticeList.length }}）</span>
+      </div>
+      <div v-if="noticeList.length" class="notice-manage-list" v-loading="noticeLoading">
+        <div v-for="item in noticeList" :key="item.id" class="notice-manage-item">
+          <div class="notice-manage-item__head">
+            <el-tag v-if="item.pinned" type="danger" size="small" effect="dark">置顶</el-tag>
+            <span class="notice-manage-item__title">{{ item.title }}</span>
+            <span class="notice-manage-item__time">{{ formatTime(item.createTime) }}</span>
+          </div>
+          <p class="notice-manage-item__content">{{ item.content }}</p>
+          <div class="notice-manage-item__meta">
+            <span>{{ item.author || '后勤管理处' }}</span>
+            <el-button type="danger" link size="small" @click="deleteAnnouncement(item.id)">删除</el-button>
+          </div>
+        </div>
+      </div>
+      <el-empty v-else description="暂无公告" :image-size="48" />
     </el-card>
 
     <el-card class="settings-card" shadow="never">
-      <template #header>
-        <span>数据维护</span>
-      </template>
+      <template #header><span>数据维护</span></template>
       <div class="data-maintenance">
         <el-button @click="handleClearCache">清除缓存</el-button>
         <el-button @click="handleDataBackup">数据备份</el-button>
@@ -99,15 +107,18 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { normalizeImageUrl } from '@/utils/image'
+import { getNoticeList, createNotice, deleteNotice } from '@/api/notice'
 
 defineOptions({ name: 'AdminSettings' })
 
 const STORAGE_KEY = 'admin_settings'
 
 const saving = ref(false)
+const publishing = ref(false)
+const noticeLoading = ref(false)
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || '/api'
 const uploadUrl = computed(() => {
@@ -120,25 +131,73 @@ const uploadHeaders = computed(() => {
   return token ? { Authorization: `Bearer ${token}` } : {}
 })
 
-const form = reactive({
-  systemName: '校园保修管理系统',
-  logoUrl: '',
-  announcement: '',
-  auditEnabled: false,
-  autoAssignEnabled: false,
-  timeoutMinutes: 60
-})
+const form = reactive({ systemName: '校园报修管理系统', logoUrl: '' })
+const announceForm = reactive({ title: '', content: '', pinned: false, author: '' })
+const noticeList = ref([])
 
 const logoDisplayUrl = computed(() => normalizeImageUrl(form.logoUrl))
+
+function formatTime(t) {
+  if (!t) return ''
+  if (typeof t === 'string') return t.replace('T', ' ').substring(0, 19)
+  return t
+}
+
+async function loadNoticeList() {
+  noticeLoading.value = true
+  try {
+    const res = await getNoticeList({ page: 1, size: 50 })
+    noticeList.value = res.records || []
+  } catch { noticeList.value = [] }
+  finally { noticeLoading.value = false }
+}
+
+async function publishAnnouncement() {
+  if (!announceForm.title.trim() || !announceForm.content.trim()) {
+    ElMessage.warning('请填写公告标题和内容')
+    return
+  }
+  publishing.value = true
+  try {
+    await createNotice({
+      title: announceForm.title.trim(),
+      content: announceForm.content.trim(),
+      pinned: announceForm.pinned,
+      author: announceForm.author.trim() || '后勤管理处'
+    })
+    ElMessage.success('公告已发布')
+    announceForm.title = ''
+    announceForm.content = ''
+    announceForm.pinned = false
+    announceForm.author = ''
+    await loadNoticeList()
+  } catch (e) {
+    ElMessage.error(e?.message || '发布失败')
+  } finally { publishing.value = false }
+}
+
+async function deleteAnnouncement(id) {
+  try {
+    await ElMessageBox.confirm('确定删除该公告？', '提示', { type: 'warning' })
+  } catch { return }
+  try {
+    await deleteNotice(id)
+    ElMessage.success('公告已删除')
+    await loadNoticeList()
+  } catch (e) {
+    ElMessage.error(e?.message || '删除失败')
+  }
+}
 
 function loadFromStorage() {
   try {
     const s = localStorage.getItem(STORAGE_KEY)
     if (s) {
       const data = JSON.parse(s)
-      Object.assign(form, data)
+      form.systemName = data.systemName || '校园报修管理系统'
+      form.logoUrl = data.logoUrl || ''
     }
-  } catch (_) {}
+  } catch {}
 }
 
 function onSave() {
@@ -147,14 +206,10 @@ function onSave() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         systemName: form.systemName,
-        logoUrl: form.logoUrl,
-        announcement: form.announcement,
-        auditEnabled: form.auditEnabled,
-        autoAssignEnabled: form.autoAssignEnabled,
-        timeoutMinutes: form.timeoutMinutes
+        logoUrl: form.logoUrl
       }))
       ElMessage.success('保存成功')
-    } catch (_) {
+    } catch {
       ElMessage.error('保存失败')
     } finally {
       saving.value = false
@@ -163,8 +218,7 @@ function onSave() {
 }
 
 function beforeLogoUpload(file) {
-  const isLt2M = file.size / 1024 / 1024 < 2
-  if (!isLt2M) {
+  if (file.size / 1024 / 1024 >= 2) {
     ElMessage.error('Logo 大小不能超过 2MB')
     return false
   }
@@ -178,23 +232,12 @@ function handleLogoSuccess(res) {
 }
 
 function handleClearCache() {
-  const keysToRemove = [STORAGE_KEY]
-  let count = 0
   try {
-    keysToRemove.forEach((key) => {
-      if (localStorage.getItem(key)) {
-        localStorage.removeItem(key)
-        count++
-      }
-    })
-    form.systemName = '校园保修管理系统'
+    if (localStorage.getItem(STORAGE_KEY)) localStorage.removeItem(STORAGE_KEY)
+    form.systemName = '校园报修管理系统'
     form.logoUrl = ''
-    form.announcement = ''
-    form.auditEnabled = false
-    form.autoAssignEnabled = false
-    form.timeoutMinutes = 60
-    ElMessage.success(count > 0 ? `已清除 ${count} 项本地缓存` : '缓存已为空')
-  } catch (_) {
+    ElMessage.success('缓存已清除')
+  } catch {
     ElMessage.error('清除缓存失败')
   }
 }
@@ -204,11 +247,7 @@ function handleDataBackup() {
     const backup = {
       exportTime: new Date().toISOString(),
       systemName: form.systemName,
-      logoUrl: form.logoUrl,
-      announcement: form.announcement,
-      auditEnabled: form.auditEnabled,
-      autoAssignEnabled: form.autoAssignEnabled,
-      timeoutMinutes: form.timeoutMinutes
+      logoUrl: form.logoUrl
     }
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -218,13 +257,14 @@ function handleDataBackup() {
     a.click()
     URL.revokeObjectURL(url)
     ElMessage.success('设置已导出为 JSON 文件')
-  } catch (_) {
+  } catch {
     ElMessage.error('导出失败')
   }
 }
 
 onMounted(() => {
   loadFromStorage()
+  loadNoticeList()
 })
 </script>
 
@@ -233,62 +273,57 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  background: #f5f7fa;
-  padding: 16px;
-  border-radius: 8px;
+  width: 100%;
 }
 
 .settings-card {
-  border-radius: 8px;
+  border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
 }
 
-.settings-form :deep(.el-form-item) {
-  margin-bottom: 16px;
-}
+.settings-form :deep(.el-form-item) { margin-bottom: 0; }
 
-.form-tip {
-  margin-left: 12px;
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-}
-
-.logo-uploader {
-  cursor: pointer;
-}
+.logo-uploader { cursor: pointer; }
 
 .logo-img,
 .logo-placeholder {
-  width: 120px;
-  height: 60px;
+  width: 120px; height: 60px;
   border: 1px dashed var(--el-border-color);
   border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   background: var(--el-fill-color-lighter);
 }
+.logo-img { object-fit: contain; }
+.logo-placeholder { flex-direction: column; gap: 4px; color: var(--el-text-color-placeholder); font-size: 12px; }
 
-.logo-img {
-  object-fit: contain;
+.announce-form :deep(.el-form-item) { margin-bottom: 16px; }
+
+.notice-manage-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.notice-manage-head__title { font-size: 14px; font-weight: 600; }
+
+.notice-manage-item {
+  padding: 14px 16px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  background: var(--el-fill-color-lighter);
+}
+.notice-manage-item__head {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.notice-manage-item__title { font-weight: 600; font-size: 14px; }
+.notice-manage-item__time { margin-left: auto; font-size: 12px; color: var(--el-text-color-placeholder); white-space: nowrap; }
+.notice-manage-item__content {
+  font-size: 13px; color: var(--el-text-color-regular); margin: 0 0 8px 0; line-height: 1.6;
+}
+.notice-manage-item__meta {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 12px; color: var(--el-text-color-placeholder);
 }
 
-.logo-placeholder {
-  flex-direction: column;
-  gap: 4px;
-  color: var(--el-text-color-placeholder);
-  font-size: 12px;
-}
-
-.data-maintenance {
-  display: flex;
-  gap: 12px;
-}
-
-.save-bar {
-  margin-top: 8px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
+.data-maintenance { display: flex; gap: 12px; }
+.save-bar { margin-top: 8px; display: flex; justify-content: flex-end; gap: 8px; }
 </style>

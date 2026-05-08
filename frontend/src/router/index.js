@@ -115,12 +115,6 @@ const routes = [
         meta: { title: '个人中心' }
       },
       {
-        path: 'profile/edit',
-        name: 'ProfileEdit',
-        component: () => import('@/views/ProfileEdit.vue'),
-        meta: { title: '编辑资料' }
-      },
-      {
         path: 'order/:id',
         name: 'OrderDetail',
         component: () => import('@/views/OrderDetail.vue'),
@@ -173,19 +167,19 @@ const routes = [
         path: 'staff/workbench',
         name: 'StaffWorkbench',
         component: () => import('@/views/StaffWorkbench.vue'),
-        meta: { title: '工作台' }
+        meta: { title: '工作台', roles: ['STAFF'] }
       },
       {
         path: 'staff/tickets',
         name: 'StaffTickets',
         component: () => import('@/views/StaffTickets.vue'),
-        meta: { title: '工单管理' }
+        meta: { title: '工单管理', roles: ['STAFF'] }
       },
       {
         path: 'staff/message',
         name: 'StaffMessage',
         component: () => import('@/views/Message.vue'),
-        meta: { title: '消息中心' }
+        meta: { title: '消息中心', roles: ['STAFF'] }
       },
       {
         path: 'staff/message/:id',
@@ -195,7 +189,7 @@ const routes = [
         path: 'staff/notice',
         name: 'StaffNotice',
         component: () => import('@/views/Notice.vue'),
-        meta: { title: '公告通知' }
+        meta: { title: '公告通知', roles: ['STAFF'] }
       }
     ]
   }
