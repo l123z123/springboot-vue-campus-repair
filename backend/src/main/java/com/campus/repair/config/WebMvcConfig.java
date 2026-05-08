@@ -3,6 +3,7 @@ package com.campus.repair.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
@@ -49,8 +50,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
         // 雪花ID(Long) -> String 序列化，防止前端精度丢失
-        // long 基本类型(Pag分页字段)保持数字，不影响前端分页组件
+        // long 基本类型(Page分页字段)保持数字，不影响前端分页组件
+        // 必须注册 JavaTimeModule，否则 LocalDateTime 序列化报 InvalidDefinitionException
         ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
         SimpleModule module = new SimpleModule();
         module.addSerializer(Long.class, ToStringSerializer.instance);
         objectMapper.registerModule(module);
