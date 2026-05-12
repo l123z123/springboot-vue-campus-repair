@@ -258,7 +258,9 @@ const currentStep = computed(() => {
 
 async function loadDetail() {
   const id = orderId.value; if (!id) return
-  loading.value = true; evaluation.value = null
+  loading.value = true
+  recommendations.value = []
+  evaluation.value = null
   try {
     const data = await getRepairDetail(id)
     if (data?.id != null || data?.orderId != null) {
@@ -279,7 +281,10 @@ async function loadDetail() {
       if (sc === 7 || sc === 8) await loadEvaluation(id)
     }
   } catch (e) { ElMessage.error(e?.message || '加载失败') }
-  finally { loading.value = false }
+  finally {
+    loading.value = false
+    auditForm.value = { approved: true, remark: '', dispatchMode: 'later', assignRepairmanId: null }
+  }
 }
 
 async function loadEvaluation(id) {
