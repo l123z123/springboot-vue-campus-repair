@@ -307,7 +307,7 @@ onMounted(async () => {
 
   tableLoading.value = true
   try {
-    const { records } = await getRepairListPage({ statusIn: '0,1,11', page: 1, size: 10 })
+    const { records } = await getRepairListPage({ statusIn: '0,1,3', page: 1, size: 10 })
     pendingList.value = records ?? []
   } catch (_) {
     pendingList.value = []

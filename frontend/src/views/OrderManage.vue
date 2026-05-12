@@ -1,7 +1,7 @@
 <template>
   <div class="order-manage">
     <div class="filter-bar">
-      <el-input v-model="keyword" placeholder="搜索地点或故障描述..." clearable style="width: 260px" @keyup.enter="onSearch" @clear="onSearch">
+      <el-input v-model="keyword" placeholder="搜索工单号、地点或故障描述" clearable style="width: 260px" @keyup.enter="onSearch" @clear="onSearch">
         <template #prefix><el-icon><Search /></el-icon></template>
       </el-input>
       <el-select v-model="statusFilter" placeholder="状态筛选" clearable style="width: 140px" @change="onSearch">

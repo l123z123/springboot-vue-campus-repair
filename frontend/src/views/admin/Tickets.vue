@@ -4,7 +4,7 @@
       <div class="filter-item filter-item--keyword">
         <el-input
           v-model="filters.keyword"
-          placeholder="工单号/报修人/故障描述"
+          placeholder="工单号/地点/故障描述"
           clearable
           @keyup.enter="fetchList"
         >
@@ -52,7 +52,7 @@
       <div class="filter-item filter-item--actions">
         <el-button type="primary" @click="fetchList">查询</el-button>
         <el-button @click="resetFilters">重置</el-button>
-        <span class="filter-hint">支持按工单号、报修人、描述搜索</span>
+        <span class="filter-hint">支持按工单号、地点、描述搜索</span>
       </div>
     </div>
 

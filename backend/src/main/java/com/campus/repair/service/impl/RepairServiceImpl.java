@@ -249,7 +249,24 @@ public class RepairServiceImpl implements RepairService {
             q.eq(RepairOrder::getStatus, status);
         }
         if (StringUtils.hasText(keyword)) {
-            q.and(w -> w.like(RepairOrder::getTitle, keyword).or().like(RepairOrder::getLocation, keyword));
+            final String kw = keyword.trim();
+            Long numericId = null;
+            if (kw.toUpperCase().startsWith("T")) {
+                try { numericId = Long.parseLong(kw.substring(1)); } catch (NumberFormatException ignored) {}
+            } else {
+                try { numericId = Long.parseLong(kw); } catch (NumberFormatException ignored) {}
+            }
+            final Long id = numericId;
+            if (id != null) {
+                q.and(w -> w.eq(RepairOrder::getOrderId, id)
+                              .or().like(RepairOrder::getTitle, kw)
+                              .or().like(RepairOrder::getLocation, kw)
+                              .or().like(RepairOrder::getDescription, kw));
+            } else {
+                q.and(w -> w.like(RepairOrder::getTitle, kw)
+                              .or().like(RepairOrder::getLocation, kw)
+                              .or().like(RepairOrder::getDescription, kw));
+            }
         }
         if (StringUtils.hasText(campus)) {
             q.eq(RepairOrder::getCampus, campus);
