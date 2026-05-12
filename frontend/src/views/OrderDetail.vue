@@ -154,13 +154,13 @@
       <el-card v-if="userRole === 1 && order.status === 4" shadow="never" class="section-card action-card">
         <div class="action-row">
           <div><h4>开始维修</h4><p>确认到场后请点击</p></div>
-          <el-button type="success" size="large" @click="handleAccept">开始维修</el-button>
+          <el-button type="success" size="large" @click="handleAcceptConfirm">开始维修</el-button>
         </div>
       </el-card>
       <el-card v-if="userRole === 1 && order.status === 5" shadow="never" class="section-card action-card">
         <div class="action-row">
           <div><h4>完成维修</h4><p>维修完成后通知学生确认</p></div>
-          <el-button type="success" size="large" @click="handleComplete">完成维修</el-button>
+          <el-button type="success" size="large" @click="handleCompleteConfirm">完成维修</el-button>
         </div>
       </el-card>
 
@@ -205,7 +205,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { ChatDotRound, Check } from '@element-plus/icons-vue'
 import { getRepairDetail, submitEvaluation as apiSubmitEvaluation, getEvaluation,
   auditOrder, dispatchOrder, acceptOrder, completeOrder, confirmOrder, getDispatchRecommendations } from '@/api/repair'
@@ -320,6 +320,20 @@ async function handleDispatch() {
   if (!dispatchForm.value.repairmanId) { ElMessage.warning('请选择维修工'); return }
   try { await dispatchOrder(orderId.value, dispatchForm.value.repairmanId); ElMessage.success('派单成功'); await loadDetail() }
   catch (e) { ElMessage.error(e?.message || '操作失败') }
+}
+
+async function handleAcceptConfirm() {
+  try {
+    await ElMessageBox.confirm('确认开始维修此工单？', '确认操作', { type: 'info' })
+  } catch { return }
+  await handleAccept()
+}
+
+async function handleCompleteConfirm() {
+  try {
+    await ElMessageBox.confirm('确认该工单已维修完成？完成后将通知学生进行确认。', '确认操作', { type: 'info' })
+  } catch { return }
+  await handleComplete()
 }
 
 async function handleAccept() { try { await acceptOrder(orderId.value); ElMessage.success('已开始维修'); await loadDetail() } catch (e) { ElMessage.error(e?.message || '操作失败') } }

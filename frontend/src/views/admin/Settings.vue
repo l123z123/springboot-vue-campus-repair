@@ -35,7 +35,7 @@
 
     <el-card class="settings-card" shadow="never">
       <template #header><span>发布公告</span></template>
-      <el-form :model="announceForm" label-width="100px" class="announce-form">
+      <el-form ref="announceFormRef" :model="announceForm" :rules="announceRules" label-width="100px" class="announce-form">
         <el-row :gutter="24">
           <el-col :xs="24" :md="16">
             <el-form-item label="公告标题">
@@ -133,6 +133,17 @@ const uploadHeaders = computed(() => {
 
 const form = reactive({ systemName: '校园报修管理系统', logoUrl: '' })
 const announceForm = reactive({ title: '', content: '', pinned: false, author: '' })
+const announceFormRef = ref(null)
+const announceRules = {
+  title: [
+    { required: true, message: '请输入公告标题', trigger: 'blur' },
+    { max: 100, message: '标题不超过100字', trigger: 'blur' }
+  ],
+  content: [
+    { required: true, message: '请输入公告内容', trigger: 'blur' },
+    { max: 500, message: '内容不超过500字', trigger: 'blur' }
+  ]
+}
 const noticeList = ref([])
 
 const logoDisplayUrl = computed(() => normalizeImageUrl(form.logoUrl))
@@ -153,9 +164,8 @@ async function loadNoticeList() {
 }
 
 async function publishAnnouncement() {
-  if (!announceForm.title.trim() || !announceForm.content.trim()) {
-    ElMessage.warning('请填写公告标题和内容')
-    return
+  if (announceFormRef.value?.validate) {
+    try { await announceFormRef.value.validate() } catch { return }
   }
   publishing.value = true
   try {

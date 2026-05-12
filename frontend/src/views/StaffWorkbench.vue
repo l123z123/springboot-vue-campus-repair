@@ -49,7 +49,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { getRepairListPage, acceptOrder, completeOrder } from '@/api/repair'
 
@@ -90,8 +90,18 @@ async function loadData() {
   finally { loading.value = false }
 }
 
-async function handleAccept(row) { try { await acceptOrder(row.id); ElMessage.success('已接单'); await loadData() } catch(e) { ElMessage.error(e?.message||'操作失败') } }
-async function handleComplete(row) { try { await completeOrder(row.id); ElMessage.success('已标记完成'); await loadData() } catch(e) { ElMessage.error(e?.message||'操作失败') } }
+async function handleAccept(row) {
+  try {
+    await ElMessageBox.confirm('确认接单？接单后请尽快到达现场维修。', '确认操作', { type: 'info' })
+  } catch { return }
+  try { await acceptOrder(row.id); ElMessage.success('已接单'); await loadData() } catch(e) { ElMessage.error(e?.message||'操作失败') }
+}
+async function handleComplete(row) {
+  try {
+    await ElMessageBox.confirm('确认该工单维修已完成？', '确认操作', { type: 'info' })
+  } catch { return }
+  try { await completeOrder(row.id); ElMessage.success('已标记完成'); await loadData() } catch(e) { ElMessage.error(e?.message||'操作失败') }
+}
 function goDetail(row) { if (row?.id) router.push({ name:'RepairDetail', params:{ id:String(row.id) } }) }
 
 onMounted(loadData)
