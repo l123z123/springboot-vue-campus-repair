@@ -43,6 +43,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { UploadFilled, Tickets, ChatDotRound, QuestionFilled } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { getRepairListPage } from '@/api/repair'
@@ -72,7 +73,10 @@ const quickActions = [
 async function loadData() {
   loading.value = true
   try { const res = await getRepairListPage({ page:1, size:5 }); recentOrders.value = (res.records||[]).slice(0,3) }
-  catch { recentOrders.value = [] }
+  catch (e) {
+    recentOrders.value = []
+    ElMessage.error(e?.message || '加载工单列表失败')
+  }
   finally { loading.value = false }
 }
 

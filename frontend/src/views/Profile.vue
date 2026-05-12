@@ -207,7 +207,9 @@ async function loadStats() {
     ])
     stats.value.total = allRes.total || 0
     stats.value.completed = doneRes.total || 0
-  } catch {}
+  } catch (e) {
+    ElMessage.error(e?.message || '加载统计数据失败')
+  }
 }
 
 function startEdit() { editing.value = true }

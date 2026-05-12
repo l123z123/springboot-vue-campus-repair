@@ -22,6 +22,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { ElMessage } from 'element-plus'
 import { getNoticeList } from '@/api/notice'
 
 defineOptions({ name: 'Notice' })
@@ -44,8 +45,9 @@ async function loadData() {
     const res = await getNoticeList({ page: page.value, size: pageSize })
     noticeList.value = res.records || []
     total.value = res.total || 0
-  } catch {
+  } catch (e) {
     noticeList.value = []
+    ElMessage.error(e?.message || '加载公告列表失败')
   } finally {
     loading.value = false
   }

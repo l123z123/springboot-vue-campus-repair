@@ -83,7 +83,10 @@ const pendingOrders = computed(() => records.value.filter(r => [4,5].includes(r.
 async function loadData() {
   loading.value = true
   try { const res = await getRepairListPage({ page:1, size:50 }); records.value = res.records || [] }
-  catch { records.value = [] }
+  catch (e) {
+    records.value = []
+    ElMessage.error(e?.message || '加载工单列表失败')
+  }
   finally { loading.value = false }
 }
 
