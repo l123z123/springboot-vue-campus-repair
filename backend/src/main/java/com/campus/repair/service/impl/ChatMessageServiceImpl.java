@@ -151,8 +151,9 @@ public class ChatMessageServiceImpl implements ChatMessageService {
 
     private void assertChatParticipant(RepairOrder order, Long userId) {
         Integer role = UserContext.getRole() != null ? UserContext.getRole() : 0;
-        if (role.intValue() == 2) {
-            throw new BusinessException(403, "管理员请使用管理端，无需在工单中聊天");
+        // 管理员如果是工单报修人（自己提交的报修），允许参与聊天
+        if (role.intValue() == 2 && !idEquals(order.getUserId(), userId)) {
+            throw new BusinessException(403, "管理员仅可参与自己提交的工单沟通");
         }
         if (idEquals(order.getUserId(), userId)) {
             return;

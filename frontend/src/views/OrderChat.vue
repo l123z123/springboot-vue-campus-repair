@@ -96,7 +96,7 @@ const headTitle = ref('沟通')
 const selfId = computed(() => String(userStore.userInfo?.userId ?? ''))
 const role = computed(() => (userStore.userInfo?.role != null ? userStore.userInfo.role : 0))
 const isStaff = computed(() => role.value === 1)
-const canWrite = computed(() => role.value === 0 || role.value === 1)
+const canWrite = computed(() => true) // 所有角色均可发送消息
 
 let pollTimer = null
 let onChatEv = null

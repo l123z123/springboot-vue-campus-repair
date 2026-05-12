@@ -99,7 +99,7 @@
       </div>
 
       <!-- 管理员操作 -->
-      <el-card v-if="userRole === 2 && (order.status === 0 || order.status === 1 || order.status === 3)" shadow="never" class="section-card action-card">
+      <el-card v-if="userRole === 2 && !isOwnOrder && (order.status === 0 || order.status === 1 || order.status === 3)" shadow="never" class="section-card action-card">
         <template #header><span class="card-title">管理员处理</span></template>
         <p class="admin-hint">{{ order.status === 3 ? '当前待派单，请选择维修工' : '请审核该工单' }}</p>
 
@@ -253,6 +253,8 @@ defineOptions({ name: 'OrderDetail' })
 const route = useRoute(); const router = useRouter(); const userStore = useUserStore()
 
 const userRole = computed(() => userStore.userInfo?.role != null ? Number(userStore.userInfo.role) : 0)
+const currentUserId = computed(() => String(userStore.userInfo?.userId ?? ''))
+const isOwnOrder = computed(() => currentUserId.value && String(order.value.userId) === currentUserId.value)
 const orderId = computed(() => route.params.id)
 const loading = ref(true); const submitting = ref(false)
 

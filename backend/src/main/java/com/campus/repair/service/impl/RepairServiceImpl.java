@@ -189,9 +189,12 @@ public class RepairServiceImpl implements RepairService {
         order.setUrgency(dto.getUrgency() != null ? dto.getUrgency() : 2);
         order.setIsUrgent(dto.getIsUrgent() != null ? dto.getIsUrgent() : false);
         
-        // 一键急诊：跳过审核，直接进入已派单状态，让维修工可以直接接单
-        if (Boolean.TRUE.equals(order.getIsUrgent())) {
-            log.info("触发一键急诊流程: 跳过审核直接进入待派单");
+        // 一键急诊：跳过审核，直接进入待派单状态，让维修工可以直接接单
+        // 管理员报修也跳过审核，直接进入待派单
+        Integer role = UserContext.getRole();
+        boolean isAdmin = (role != null && role == 2);
+        if (Boolean.TRUE.equals(order.getIsUrgent()) || isAdmin) {
+            log.info("跳过审核直接进入待派单: userId={}, isAdmin={}, isUrgent={}", userId, isAdmin, order.getIsUrgent());
             order.setStatus(STATUS_WAITING_DISPATCH);
             order.setAuditTime(LocalDateTime.now());
         } else {
@@ -501,7 +504,11 @@ public class RepairServiceImpl implements RepairService {
         if (order == null) {
             throw new BusinessException("工单不存在");
         }
-        
+        // 管理员不能审核自己提交的工单（管理员报修自动跳过审核）
+        if (order.getUserId().equals(currentId)) {
+            throw new BusinessException(400, "您不能审核自己提交的工单，管理员报修将自动跳过审核");
+        }
+
         int oldStatus = order.getStatus();
         if (oldStatus != STATUS_SUBMITTED && oldStatus != STATUS_WAITING_AUDIT) {
             throw new BusinessException(400, "当前状态不允许审核");
