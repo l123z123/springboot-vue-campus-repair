@@ -14,23 +14,20 @@
         <el-col
           v-for="card in statCards"
           :key="card.key"
-          :xs="24"
-          :sm="12"
-          :lg="6"
+          :xs="24" :sm="12" :lg="6"
         >
-          <el-card class="dashboard-stat-card" shadow="never">
-            <div class="dashboard-stat-card__header">
-              <div class="dashboard-stat-card__icon" :class="`is-${card.key}`">
-                <el-icon>
-                  <component :is="card.icon" />
-                </el-icon>
-              </div>
-              <div class="dashboard-stat-card__info">
-                <div class="dashboard-stat-card__label">{{ card.label }}</div>
-                <div class="dashboard-stat-card__value">{{ card.value }}</div>
-              </div>
+          <div
+            class="dash-stat"
+            :class="{ 'is-warning': card.key === 'urgent' && card.value > 0 }"
+          >
+            <div class="dash-stat__icon" :class="`dash-stat__icon--${card.key}`">
+              <el-icon :size="22"><component :is="card.icon" /></el-icon>
             </div>
-          </el-card>
+            <div class="dash-stat__body">
+              <span class="dash-stat__label">{{ card.label }}</span>
+              <span class="dash-stat__value">{{ card.value }}</span>
+            </div>
+          </div>
         </el-col>
       </el-row>
 
@@ -239,8 +236,14 @@ function urgencyTagType(u) {
   return map[u] ?? 'info'
 }
 
-function pendingRowClassName() {
-  return 'pending-row'
+function pendingRowClassName({ row }) {
+  if (!row.createTime && !row.date) return ''
+  const created = new Date(row.createTime || row.date).getTime()
+  const now = Date.now()
+  const hours = (now - created) / 3600000
+  if (hours > 48) return 'sla-overdue'
+  if (hours > 24) return 'sla-warning'
+  return ''
 }
 
 async function showDetail(row) {
@@ -335,95 +338,6 @@ onMounted(async () => {
 .dashboard-stat-row {
   margin-bottom: 24px;
 }
-
-.dashboard-stat-card {
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-  border: none;
-  padding: 18px 20px 10px;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.dashboard-stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
-}
-
-.dashboard-stat-card__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.dashboard-stat-card__icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(99, 102, 241, 0.12);
-  color: #6366f1;
-  flex-shrink: 0;
-}
-
-.dashboard-stat-card__icon.is-pending {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-}
-
-.dashboard-stat-card__icon.is-completed {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
-}
-
-.dashboard-stat-card__icon.is-urgent {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-}
-
-.dashboard-stat-card__info {
-  flex: 1;
-  min-width: 0;
-}
-
-.dashboard-stat-card__label {
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
-  line-height: 1.6;
-}
-
-.dashboard-stat-card__value {
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.6;
-  color: var(--el-text-color-primary);
-}
-
-.dashboard-stat-card__trend {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.dashboard-stat-card__trend.is-up {
-  color: #16a34a;
-}
-
-.dashboard-stat-card__trend.is-down {
-  color: #dc2626;
-}
-
-.dashboard-stat-card__sparkline {
-  margin-top: 8px;
-  height: 36px;
-  width: 100%;
-}
-
 .pending-table {
   margin-top: 24px;
 }
@@ -482,9 +396,60 @@ onMounted(async () => {
   color: #4b5563;
 }
 
-.pending-row:hover > td.el-table__cell {
-  background-color: rgba(99, 102, 241, 0.04) !important;
+
+.dash-stat {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
+.dash-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+.dash-stat.is-warning {
+  animation: urgentPulse 2s infinite;
+}
+@keyframes urgentPulse {
+  0%, 100% { box-shadow: var(--shadow-card); }
+  50% { box-shadow: 0 0 0 6px rgba(239,68,68,0.15); }
+}
+.dash-stat__icon {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.dash-stat__icon--total {
+  background: rgba(37,99,235,0.1); color: #2563EB;
+}
+.dash-stat__icon--pending {
+  background: rgba(59,130,246,0.1); color: #3B82F6;
+}
+.dash-stat__icon--completed {
+  background: rgba(16,185,129,0.1); color: #10B981;
+}
+.dash-stat__icon--urgent {
+  background: rgba(239,68,68,0.1); color: #EF4444;
+}
+.dash-stat__body {
+  display: flex; flex-direction: column; gap: 2px;
+}
+.dash-stat__label {
+  font-size: 13px; color: var(--el-text-color-secondary);
+}
+.dash-stat__value {
+  font-size: 28px; font-weight: 700; color: var(--el-text-color-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+:deep(.sla-overdue) { background: rgba(239,68,68,0.06) !important; }
+:deep(.sla-warning) { background: rgba(245,158,11,0.06) !important; }
+
 
 .detail-loading {
   padding: 20px 0;
