@@ -15,19 +15,35 @@
       </div>
 
       <el-card shadow="never" class="section-card">
-        <template #header><span class="card-title">基本信息</span></template>
-        <el-descriptions :column="3" border size="small">
-          <el-descriptions-item label="报修地点">{{ order.location }}</el-descriptions-item>
-          <el-descriptions-item label="故障分类">{{ order.category || '其他' }}</el-descriptions-item>
-          <el-descriptions-item label="紧急程度">
+        <template #header><span class="card-title">工单详情</span></template>
+        <div class="info-grid">
+          <div class="info-grid__item">
+            <span class="info-label">报修地点</span>
+            <span class="info-value">{{ order.location }}</span>
+          </div>
+          <div class="info-grid__item">
+            <span class="info-label">故障分类</span>
+            <span class="info-value">{{ order.category || '其他' }}</span>
+          </div>
+          <div class="info-grid__item">
+            <span class="info-label">紧急程度</span>
             <el-tag v-if="order.isUrgent || order.urgency === 'high'" type="danger" size="small">紧急</el-tag>
             <el-tag v-else-if="order.urgency === 'medium'" type="warning" size="small">中等</el-tag>
             <el-tag v-else type="info" size="small">普通</el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="报修人">{{ order.reporterName || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="联系电话">{{ order.phone || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="维修工">{{ order.worker }}</el-descriptions-item>
-        </el-descriptions>
+          </div>
+          <div class="info-grid__item">
+            <span class="info-label">报修人</span>
+            <span class="info-value">{{ order.reporterName || '-' }}</span>
+          </div>
+          <div class="info-grid__item">
+            <span class="info-label">联系电话</span>
+            <span class="info-value">{{ order.phone || '-' }}</span>
+          </div>
+          <div class="info-grid__item">
+            <span class="info-label">维修工</span>
+            <span class="info-value">{{ order.worker }}</span>
+          </div>
+        </div>
       </el-card>
 
       <el-card shadow="never" class="section-card">
@@ -43,14 +59,25 @@
 
       <el-card shadow="never" class="section-card">
         <template #header><span class="card-title">处理进度</span></template>
-        <el-steps :active="currentStep" align-center finish-status="success">
-          <el-step title="提交" :description="order.createTime || ''" />
-          <el-step title="审核" :description="order.auditTime || ''" />
-          <el-step title="派单" :description="order.dispatchTime || ''" />
-          <el-step title="维修" :description="order.completedTime || ''" />
-          <el-step title="确认" :description="order.confirmTime || ''" />
-          <el-step title="评价" :description="evaluation?.createTime || ''" />
-        </el-steps>
+        <div class="custom-steps">
+          <div
+            v-for="(step, idx) in stepItems"
+            :key="idx"
+            class="c-step"
+            :class="{ 'is-active': idx === currentStep, 'is-done': idx < currentStep, 'is-fail': isRejected && idx === 1 }"
+          >
+            <div class="c-step__dot">
+              <el-icon v-if="idx < currentStep"><Check /></el-icon>
+              <el-icon v-else-if="isRejected && idx === 1"><Close /></el-icon>
+              <span v-else>{{ idx + 1 }}</span>
+            </div>
+            <div class="c-step__label">{{ step.label }}</div>
+            <div v-if="step.time" class="c-step__time">{{ step.time }}</div>
+          </div>
+          <div class="c-step__line">
+            <div class="c-step__line-fill" :style="{ width: stepProgress + '%' }"></div>
+          </div>
+        </div>
         <div v-if="order.status === 9" style="margin-top:16px;text-align:center;">
           <el-alert type="error" title="该工单已被管理员拒绝" :closable="false" show-icon />
         </div>
@@ -150,28 +177,6 @@
         </el-form>
       </el-card>
 
-      <!-- 维修工操作 -->
-      <el-card v-if="userRole === 1 && order.status === 4" shadow="never" class="section-card action-card">
-        <div class="action-row">
-          <div><h4>开始维修</h4><p>确认到场后请点击</p></div>
-          <el-button type="success" size="large" @click="handleAcceptConfirm">开始维修</el-button>
-        </div>
-      </el-card>
-      <el-card v-if="userRole === 1 && order.status === 5" shadow="never" class="section-card action-card">
-        <div class="action-row">
-          <div><h4>完成维修</h4><p>维修完成后通知学生确认</p></div>
-          <el-button type="success" size="large" @click="handleCompleteConfirm">完成维修</el-button>
-        </div>
-      </el-card>
-
-      <!-- 学生操作 -->
-      <el-card v-if="userRole === 0 && order.status === 6" shadow="never" class="section-card action-card">
-        <div class="action-row">
-          <div><h4>确认维修完成</h4><p>确认无误后可评价</p></div>
-          <el-button type="primary" size="large" @click="handleConfirm">确认完成</el-button>
-        </div>
-      </el-card>
-
       <!-- 评价 -->
       <el-card v-if="showEvaluationForm" shadow="never" class="section-card">
         <template #header><span class="card-title">服务评价</span></template>
@@ -198,6 +203,36 @@
           <span style="font-size:12px;color:var(--el-text-color-placeholder)">{{ evaluation.createTime }}</span>
         </div>
       </el-card>
+
+      <transition name="slide-up">
+        <div v-if="showActionBar" class="action-bar">
+          <div class="action-bar__inner">
+            <div class="action-bar__info">
+              <span>{{ actionBarText }}</span>
+            </div>
+            <div class="action-bar__btns">
+              <el-button
+                v-if="userRole === 1 && order.status === 4"
+                type="success"
+                size="large"
+                @click="handleAcceptConfirm"
+              >开始维修</el-button>
+              <el-button
+                v-if="userRole === 1 && order.status === 5"
+                type="success"
+                size="large"
+                @click="handleCompleteConfirm"
+              >完成维修</el-button>
+              <el-button
+                v-if="userRole === 0 && order.status === 6"
+                type="primary"
+                size="large"
+                @click="handleConfirm"
+              >确认完成</el-button>
+            </div>
+          </div>
+        </div>
+      </transition>
     </template>
   </div>
 </template>
@@ -206,7 +241,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ChatDotRound, Check } from '@element-plus/icons-vue'
+import { ChatDotRound, Check, Close } from '@element-plus/icons-vue'
 import { getRepairDetail, submitEvaluation as apiSubmitEvaluation, getEvaluation,
   auditOrder, dispatchOrder, acceptOrder, completeOrder, confirmOrder, getDispatchRecommendations } from '@/api/repair'
 import { getAdminUserList } from '@/api/adminUser'
@@ -234,6 +269,34 @@ const evaluationModel = ref({ score: 5, comment: '', isAnonymous: false })
 const showEvaluationDetail = computed(() => !!(evaluation.value?.score != null && Number(evaluation.value.score) > 0))
 const showEvaluationForm = computed(() => userRole.value === 0 && Number(order.value.status) === 7 && !showEvaluationDetail.value)
 const evaluationRules = { score: [{ required: true, message: '请选择评分', trigger: 'change' }] }
+
+const isRejected = computed(() => order.value.status === 9)
+const stepItems = computed(() => [
+  { label: '提交', time: order.value.createTime },
+  { label: '审核', time: order.value.auditTime },
+  { label: '派单', time: order.value.dispatchTime },
+  { label: '维修', time: order.value.completedTime },
+  { label: '确认', time: order.value.confirmTime },
+  { label: '评价', time: evaluation.value?.createTime || '' }
+])
+const stepProgress = computed(() => {
+  if (order.value.status >= 8) return 100
+  if (order.value.status >= 6) return 83
+  if (order.value.status >= 4) return 66
+  if (order.value.status >= 3) return 50
+  if (order.value.status >= 1) return 33
+  return 16
+})
+const showActionBar = computed(() => {
+  return (userRole.value === 1 && (order.value.status === 4 || order.value.status === 5))
+    || (userRole.value === 0 && order.value.status === 6)
+})
+const actionBarText = computed(() => {
+  if (userRole.value === 1 && order.value.status === 4) return '确认到场后请点击开始维修'
+  if (userRole.value === 1 && order.value.status === 5) return '维修完成后请点击完成维修'
+  if (userRole.value === 0 && order.value.status === 6) return '维修已完成，请确认'
+  return ''
+})
 
 const auditForm = ref({ approved: true, remark: '', dispatchMode: 'later', assignRepairmanId: null })
 const auditSubmitting = ref(false)
@@ -413,4 +476,121 @@ watch(orderId, () => { loadDetail(); loadRecommendations() })
 
 .eval-comment { margin:12px 0; padding:12px; background:var(--el-fill-color-lighter); border-radius:8px; font-size:14px; line-height:1.7; }
 .eval-meta { display:flex; justify-content:space-between; align-items:center; padding-top:10px; border-top:1px solid var(--el-border-color-lighter); margin-top:8px; }
+
+/* Custom Steps */
+.custom-steps {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 0 32px;
+}
+.c-step {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+.c-step__dot {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--el-fill-color);
+  border: 2px solid var(--el-border-color);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600;
+  color: var(--el-text-color-placeholder);
+  transition: all 0.3s;
+}
+.c-step.is-active .c-step__dot {
+  background: var(--el-color-primary);
+  border-color: var(--el-color-primary);
+  color: #fff;
+  box-shadow: 0 0 0 6px rgba(37,99,235,0.15);
+  animation: stepPulse 2s infinite;
+}
+.c-step.is-done .c-step__dot {
+  background: var(--el-color-success);
+  border-color: var(--el-color-success);
+  color: #fff;
+}
+.c-step.is-fail .c-step__dot {
+  background: var(--el-color-danger);
+  border-color: var(--el-color-danger);
+  color: #fff;
+}
+.c-step__label {
+  font-size: 12px; font-weight: 500;
+  color: var(--el-text-color-regular);
+}
+.c-step__time {
+  font-size: 11px; color: var(--el-text-color-placeholder);
+  max-width: 80px; text-align: center;
+}
+.c-step__line {
+  position: absolute; top: 36px; left: 12%; right: 12%; height: 3px;
+  background: var(--el-fill-color);
+  border-radius: 2px;
+  z-index: 0;
+}
+.c-step__line-fill {
+  height: 100%; border-radius: 2px;
+  background: var(--el-color-success);
+  transition: width 0.5s ease;
+}
+
+@keyframes stepPulse {
+  0%, 100% { box-shadow: 0 0 0 6px rgba(37,99,235,0.15); }
+  50% { box-shadow: 0 0 0 12px rgba(37,99,235,0.05); }
+}
+
+/* Info Grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.info-grid__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.info-label {
+  font-size: 12px;
+  color: var(--el-text-color-placeholder);
+}
+.info-value {
+  font-size: 14px;
+  color: var(--el-text-color-primary);
+  font-weight: 500;
+}
+
+/* Action Bar */
+.action-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: #fff;
+  border-top: 1px solid var(--el-border-color-lighter);
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+  padding: 16px 24px;
+  z-index: 100;
+}
+.action-bar__inner {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.action-bar__info { font-size: 14px; color: var(--el-text-color-secondary); }
+
+.slide-up-enter-active, .slide-up-leave-active { transition: transform 0.3s ease; }
+.slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); }
+
+@media (max-width: 640px) {
+  .info-grid { grid-template-columns: repeat(2, 1fr); }
+  .custom-steps { flex-wrap: wrap; gap: 12px; }
+  .c-step { flex: 0 0 auto; }
+}
 </style>
