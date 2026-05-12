@@ -65,6 +65,12 @@ const routes = [
         meta: { title: '系统设置', roles: ['ADMIN'] }
       },
       {
+        path: 'message',
+        name: 'AdminMessage',
+        component: () => import('@/views/Message.vue'),
+        meta: { title: '消息中心', roles: ['ADMIN'] }
+      },
+      {
         path: 'profile',
         name: 'AdminProfile',
         component: () => import('@/views/admin/Profile.vue'),

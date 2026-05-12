@@ -68,9 +68,6 @@ function shouldShowPush(msg, rawBody) {
     return String(userId) === String(target)
   }
   if (t === 'CHAT') {
-    if (role === 2) {
-      return false
-    }
     return String(userId) === String(msg.targetUserId)
   }
   return true

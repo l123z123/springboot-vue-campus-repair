@@ -142,6 +142,10 @@
             <el-icon><ChatDotRound /></el-icon>
             <template #title>反馈管理</template>
           </el-menu-item>
+          <el-menu-item index="/admin/message">
+            <el-icon><Message /></el-icon>
+            <template #title>消息中心</template>
+          </el-menu-item>
           <el-menu-item index="/admin/settings">
             <el-icon><Setting /></el-icon>
             <template #title>系统设置</template>
@@ -176,7 +180,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Fold, Expand, Bell, ArrowDown, DataAnalysis, List, User, PieChart, ChatDotRound, Setting } from '@element-plus/icons-vue'
+import { Fold, Expand, Bell, ArrowDown, DataAnalysis, List, User, PieChart, ChatDotRound, Setting, Message } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { useSystemNotifyStore } from '@/stores/systemNotify'
 import { useWebSocket } from '@/composables/useWebSocket'

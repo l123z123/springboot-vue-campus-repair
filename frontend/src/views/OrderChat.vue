@@ -7,16 +7,7 @@
       </div>
     </div>
 
-    <el-alert
-      v-if="role === 2"
-      type="warning"
-      :closable="false"
-      show-icon
-      class="order-chat__admin-hint"
-      title="管理员仅可查看本工单沟通记录，不参与聊天。"
-    />
-
-    <div ref="listRef" class="order-chat__list" v-loading="loading" :class="{ 'is-readonly': !canWrite }">
+    <div ref="listRef" class="order-chat__list" v-loading="loading">
       <div v-for="m in messages" :key="m.id" class="oc-msg" :class="{ 'is-mine': isMine(m) }">
         <div class="oc-msg__meta">
           <span class="oc-msg__who">{{ m.senderName || '用户' }}</span>

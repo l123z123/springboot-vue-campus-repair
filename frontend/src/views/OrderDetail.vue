@@ -269,7 +269,7 @@ const evaluation = ref(null)
 const evaluationFormRef = ref(null)
 const evaluationModel = ref({ score: 5, comment: '', isAnonymous: false })
 const showEvaluationDetail = computed(() => !!(evaluation.value?.score != null && Number(evaluation.value.score) > 0))
-const showEvaluationForm = computed(() => userRole.value === 0 && Number(order.value.status) === 7 && !showEvaluationDetail.value)
+const showEvaluationForm = computed(() => (userRole.value === 0 || currentUserId.value) && Number(order.value.status) === 7 && !showEvaluationDetail.value)
 const evaluationRules = { score: [{ required: true, message: '请选择评分', trigger: 'change' }] }
 
 const isRejected = computed(() => order.value.status === 9)

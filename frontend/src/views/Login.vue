@@ -246,7 +246,7 @@ async function sendLoginCode() {
       email: emailForm.email.trim(),
       scene: 'LOGIN'
     })
-    ElMessage.success('验证码已发至邮箱，未配 SMTP 时可看后端日志')
+    ElMessage.success('验证码已发送，请注意查收')
   } catch (e) {
     ElMessage.error(e?.message || '发送失败')
     return
