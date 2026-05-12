@@ -262,6 +262,9 @@ function goOrderDetail(oid, snId) {
 }
 
 function onNotifyItemClick(it) {
+  // 用户正在选中文字复制时不跳转
+  const sel = window.getSelection()
+  if (sel && sel.toString().trim().length > 0) return
   if (it?.orderIds?.length) {
     if (it.orderIds.length === 1) {
       goOrderDetail(it.orderIds[0], it.id)

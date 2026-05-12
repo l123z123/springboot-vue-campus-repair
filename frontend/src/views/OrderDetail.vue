@@ -224,7 +224,7 @@
                 @click="handleCompleteConfirm"
               >完成维修</el-button>
               <el-button
-                v-if="userRole === 0 && order.status === 6"
+                v-if="(userRole === 0 || isOwnOrder) && order.status === 6"
                 type="primary"
                 size="large"
                 @click="handleConfirm"
@@ -291,7 +291,7 @@ const stepProgress = computed(() => {
 })
 const showActionBar = computed(() => {
   return (userRole.value === 1 && (order.value.status === 4 || order.value.status === 5))
-    || (userRole.value === 0 && order.value.status === 6)
+    || ((userRole.value === 0 || isOwnOrder.value) && order.value.status === 6)
 })
 const actionBarText = computed(() => {
   if (userRole.value === 1 && order.value.status === 4) return '确认到场后请点击开始维修'
