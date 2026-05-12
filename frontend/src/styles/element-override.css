@@ -1,0 +1,29 @@
+:root {
+  --el-color-primary: #2563EB;
+  --el-color-primary-light-3: #5B8DEF;
+  --el-color-primary-light-5: #93B4F5;
+  --el-color-primary-light-7: #C7D7FA;
+  --el-color-primary-light-8: #DCE6FC;
+  --el-color-primary-light-9: #EEF2FD;
+  --el-color-primary-dark-2: #1D4ED8;
+  --el-color-success: #10B981;
+  --el-color-warning: #F59E0B;
+  --el-color-danger: #EF4444;
+}
+
+.el-loading-spinner .path {
+  stroke: var(--el-color-primary);
+}
+
+.el-button {
+  transition: all 0.2s ease;
+}
+
+.el-message {
+  animation: messageFadeIn 0.25s ease;
+}
+
+@keyframes messageFadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

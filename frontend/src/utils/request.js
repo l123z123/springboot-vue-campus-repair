@@ -46,10 +46,7 @@ request.interceptors.response.use(
       return Promise.reject(new Error(data.message || '未登录或已过期'))
     }
     if (data.code !== 200) {
-      // 后端全局“系统繁忙”提示在前端有兜底数据时不再重复弹出，降低干扰
-      if (!(data.code === 500 && data.message && data.message.indexOf('系统繁忙') !== -1)) {
-        ElMessage.error(data.message || '请求失败')
-      }
+      ElMessage.error(data.message || '请求失败')
       return Promise.reject(new Error(data.message || '请求失败'))
     }
     return data
