@@ -1,0 +1,142 @@
+[
+  {
+    "index": 367,
+    "style": "Heading 1",
+    "text": "参考文献"
+  },
+  {
+    "index": 368,
+    "style": "Normal",
+    "text": "[1] 山锋, 丑洋. 基于互联网新技术的高校后勤报修系统应用研究[J]. 数字技术与应用, 2020, 38(1):56-57."
+  },
+  {
+    "index": 369,
+    "style": "Normal",
+    "text": "[2] 肖智兵, 王亮, 王小红. 基于微信小程序的高校后勤报修系统——以湖北职业技术学院为例的设计与实现[J]. 现代信息科技, 2020, 4(23)."
+  },
+  {
+    "index": 370,
+    "style": "Normal",
+    "text": "[3] 刘锦. 智慧校园故障报修信息管理系统开发研究[J]. 计算机与网络, 2024."
+  },
+  {
+    "index": 371,
+    "style": "Normal",
+    "text": "[4] 王福强. Spring Boot实战[M]. 北京: 人民邮电出版社, 2019."
+  },
+  {
+    "index": 372,
+    "style": "Normal",
+    "text": "[5] 梁灏. Vue.js实战[M]. 北京: 清华大学出版社, 2018."
+  },
+  {
+    "index": 373,
+    "style": "Normal",
+    "text": "[6] 李刚. 疯狂Java讲义（第5版）[M]. 北京: 电子工业出版社, 2019."
+  },
+  {
+    "index": 374,
+    "style": "Normal",
+    "text": "[7] 黄勇. 架构探险:从零开始写Java Web框架[M]. 北京: 电子工业出版社, 2015."
+  },
+  {
+    "index": 375,
+    "style": "Normal",
+    "text": "[8] 郝佳. Spring源码深度解析（第2版）[M]. 北京: 人民邮电出版社, 2019."
+  },
+  {
+    "index": 376,
+    "style": "Normal",
+    "text": "[9] 周立. Spring Cloud与Docker微服务架构实战（第2版）[M]. 北京: 电子工业出版社, 2018."
+  },
+  {
+    "index": 377,
+    "style": "Normal",
+    "text": "[10] 杨开振. 深入浅出MyBatis技术原理与实战[M]. 北京: 电子工业出版社, 2016."
+  },
+  {
+    "index": 378,
+    "style": "Normal",
+    "text": "[11] 明日科技. Java从入门到精通（第5版）[M]. 北京: 清华大学出版社, 2019."
+  },
+  {
+    "index": 379,
+    "style": "Normal",
+    "text": "[12] 刘增辉. MyBatis从入门到精通[M]. 北京: 电子工业出版社, 2017."
+  },
+  {
+    "index": 380,
+    "style": "Normal",
+    "text": "[13] 张耀春. Vue.js权威指南[M]. 北京: 电子工业出版社, 2016."
+  },
+  {
+    "index": 381,
+    "style": "Normal",
+    "text": "[14] 王红元. 微信小程序开发实战[M]. 北京: 电子工业出版社, 2018."
+  },
+  {
+    "index": 382,
+    "style": "Normal",
+    "text": "[15] 李兴华. Java Web开发实战经典[M]. 北京: 清华大学出版社, 2014."
+  },
+  {
+    "index": 383,
+    "style": "Normal",
+    "text": "[16] 黄文毅. Spring 5企业级开发实战[M]. 北京: 清华大学出版社, 2019."
+  },
+  {
+    "index": 384,
+    "style": "Normal",
+    "text": "[17] 徐丽. MySQL 8.0从入门到精通[M]. 北京: 电子工业出版社, 2019."
+  },
+  {
+    "index": 385,
+    "style": "Normal",
+    "text": "[18] 孙卫琴. Tomcat与Java Web开发技术详解（第3版）[M]. 北京: 电子工业出版社, 2019."
+  },
+  {
+    "index": 386,
+    "style": "Normal",
+    "text": "[19] 李子晔. Redis设计与实现[M]. 北京: 机械工业出版社, 2014."
+  },
+  {
+    "index": 387,
+    "style": "Normal",
+    "text": "[20] 李智慧. 大型网站技术架构:核心原理与案例分析[M]. 北京: 电子工业出版社, 2013."
+  },
+  {
+    "index": 388,
+    "style": "Normal",
+    "text": "[21] 刘博. Spring Boot企业级应用开发实战[M]. 北京: 电子工业出版社, 2018."
+  },
+  {
+    "index": 389,
+    "style": "Normal",
+    "text": "[22] 许令波. 深入分析Java Web技术内幕（修订版）[M]. 北京: 电子工业出版社, 2014."
+  },
+  {
+    "index": 390,
+    "style": "Normal",
+    "text": "[23] 张海藩. 软件工程导论（第6版）[M]. 北京: 清华大学出版社, 2013."
+  },
+  {
+    "index": 391,
+    "style": "Normal",
+    "text": "[24] 张书豪. 高校后勤信息化建设研究[J]. 中国教育信息化, 2019(5): 45-48."
+  },
+  {
+    "index": 392,
+    "style": "Normal",
+    "text": "[25] Raymond M. Facility Management Systems in Higher Education: A Comprehensive Review[J]. Journal of Educational Technology, 2018, 15(3): 234-248."
+  },
+  {
+    "index": 393,
+    "style": "Normal",
+    "text": "[26] Ken S. A Study of Facility Maintenance Systems Based on IoT Technology[J]. International Journal of Smart Campus, 2021, 8(2): 112-125."
+  },
+  {
+    "index": 394,
+    "style": "Normal",
+    "text": "[27] Tanaka H. Standardization of University Facility Management in Japan[J]. Journal of Higher Education Management, 2019, 22(4): 301-315."
+  }
+]

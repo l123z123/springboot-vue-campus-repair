@@ -2,31 +2,32 @@ module.exports = {
   baseURL: process.env.BASE_URL || 'http://localhost:5173',
 
   student: {
-    username: 'test_student',
-    password: 'Test123456',
-    email: 'student@test.com',
+    username: '20260001',
+    password: '123456',
+    role: 0,
+    email: 'student20260001@campusrepair.demo',
     phone: '13800138000'
   },
 
   staff: {
-    username: 'test_worker',
-    password: 'Test123456',
-    name: '测试维修工'
+    username: 'worker01',
+    password: '123456',
+    role: 1,
+    name: '陈立军'
   },
 
   admin: {
     username: 'admin',
-    password: 'admin123',
-    name: '管理员'
+    password: '123456',
+    role: 2,
+    name: '马文轩'
   },
 
   repairOrder: {
-    campus: '主校区',
-    area: '3号楼',
-    locationDetail: '502 宿舍',
-    description: '空调不制冷，制冷模式下出风口吹出的是常温风',
-    category: ['生活类', '宿舍用电'],
-    urgency: 'medium',
+    campusLabel: '河东校区',
+    areaLabel: '教学楼',
+    locationDetail: '502教室',
+    description: '空调不制冷，出风口吹出常温风',
     phone: '13800138000'
   }
 }

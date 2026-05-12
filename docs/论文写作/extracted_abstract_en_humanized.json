@@ -1,0 +1,27 @@
+[
+  {
+    "index": 64,
+    "style": "Heading 1",
+    "text": "Abstract"
+  },
+  {
+    "index": 65,
+    "style": "Normal",
+    "text": "Campus repair management is an essential part of daily university operations, and its level of digitization directly affects the service experience of faculty and students as well as management efficiency. Traditional campus repair processes face several problems: limited reporting channels, poor information visibility, repair progress that cannot be tracked, maintenance staff workload without real-time oversight, and inefficient statistical aggregation. This thesis presents a campus repair management system built on a SpringBoot+Vue front-end and back-end separation architecture."
+  },
+  {
+    "index": 66,
+    "style": "Normal",
+    "text": "The system serves three user roles — students, maintenance staff, and administrators — and forms a complete repair management closed loop. The back-end runs on Spring Boot 2.7 with MyBatis-Plus for persistence, using Spring Security and JWT for authentication and authorization, and Redis 6.2 for token caching and email verification code storage. The front-end is built with Vue 3 Composition API and the Element Plus component library, offering a responsive interface with ECharts 6.0 for data visualization. One key feature is an intelligent dispatch recommendation algorithm that produces explainable scores based on four weighted dimensions: current workload, similar-fault experience, same-area experience, and historical ratings. The system also includes an SLA timeout alert mechanism that scans for overdue work orders on a schedule and pushes alert notifications, as well as a Redis-to-memory automatic degradation strategy that keeps authentication running when Redis is unavailable. The system has passed 11 functional test cases covering authentication, work orders, dispatch recommendation, notification, statistics, and concurrency modules, with a 100% pass rate and full deployment readiness."
+  },
+  {
+    "index": 67,
+    "style": "Normal",
+    "text": "Keywords: Campus Repair Management; Spring Boot; Vue; Front-end and Back-end Separation; Intelligent Dispatch; Work Order State Machine"
+  },
+  {
+    "index": 68,
+    "style": "Normal",
+    "text": ""
+  }
+]

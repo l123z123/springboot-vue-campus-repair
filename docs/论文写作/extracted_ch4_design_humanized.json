@@ -1,0 +1,222 @@
+[
+  {
+    "index": 190,
+    "style": "Heading 1",
+    "text": "第4章 系统设计"
+  },
+  {
+    "index": 191,
+    "style": "Normal",
+    "text": "本章在需求分析的基础上，从总体架构设计、数据库设计和接口设计三个方面阐述校园报修管理系统的设计。"
+  },
+  {
+    "index": 192,
+    "style": "Heading 2",
+    "text": "4.1 系统总体设计"
+  },
+  {
+    "index": 193,
+    "style": "Heading 3",
+    "text": "4.1.1 系统架构设计"
+  },
+  {
+    "index": 194,
+    "style": "Normal",
+    "text": "系统采用前后端分离的B/S三层架构，各层之间通过HTTP协议和WebSocket协议通信。前端Vue 3单页应用通过Axios向Spring Boot后端发送RESTful API请求，后端以JSON格式返回数据。WebSocket连接基于STOMP协议，服务端通过SimpMessagingTemplate向订阅了`/topic/notify`的客户端实时推送工单状态变更和通知消息[4]。"
+  },
+  {
+    "index": 195,
+    "style": "Normal",
+    "text": "技术分层如下：前端展示层负责页面渲染和用户交互，Element Plus组件库提供UI风格，ECharts 6.0负责图表可视化；后端服务层处理业务逻辑，Spring Security拦截请求进行JWT认证和角色鉴权，Controller接收请求参数并调用Service完成业务处理，Service内部通过MyBatis-Plus的Mapper接口与数据库交互；数据持久层由MySQL 8.0存储结构化业务数据，Redis 6.2缓存JWT令牌和邮箱验证码等高频读写数据。"
+  },
+  {
+    "index": 196,
+    "style": "Heading 3",
+    "text": "4.1.2 功能模块分解"
+  },
+  {
+    "index": 197,
+    "style": "Normal",
+    "text": "系统按业务领域划分为七个功能模块："
+  },
+  {
+    "index": 198,
+    "style": "Normal",
+    "text": "（1）认证模块：负责用户注册、密码登录、邮箱验证码登录、找回密码、登出等认证功能。JwtUtil生成、解析和校验令牌，EmailVerificationService发送和验证邮箱验证码。该模块为所有业务模块提供身份认证。"
+  },
+  {
+    "index": 199,
+    "style": "Normal",
+    "text": "（2）工单模块：系统的核心业务模块，管理报修工单的完整生命周期。包含工单创建（学生提交报修）、工单查询（按状态、区域、类型筛选分页列表）、工单详情（含状态流转记录）、状态更新（严格按状态机合法性校验）、智能派单推荐（四维度评分算法）等功能。"
+  },
+  {
+    "index": 200,
+    "style": "Normal",
+    "text": "（3）通知模块：基于WebSocket STOMP协议实现服务端到客户端的实时消息推送。NotifyService统一封装通知发送逻辑，通过SimpMessagingTemplate向`/topic/notify`广播JSON消息。通知类型涵盖工单创建（CREATED）、状态变更（STATUS_CHANGED）、SLA超时（SLA_TIMEOUT）、工单沟通（CHAT）等。前端useWebSocket.js管理STOMP连接生命周期，systemNotify store存储通知列表供全局组件使用。"
+  },
+  {
+    "index": 201,
+    "style": "Normal",
+    "text": "（4）统计模块：为管理员提供多维度数据可视化。DashboardService聚合查询今日报修量、累计工单数、区域Top10、状态分布、故障类型树、时段热力图、维修工绩效等指标。统计API通过StatsController暴露，前端Dashboard.vue和Stats.vue以ECharts图表呈现。"
+  },
+  {
+    "index": 202,
+    "style": "Normal",
+    "text": "（5）用户模块：管理三种角色的用户信息。包含个人资料查看与编辑、密码修改、管理员对用户的增删改查和状态管理（启用/禁用）。公开注册仅允许学生角色，维修工和管理员由管理员在后台创建。"
+  },
+  {
+    "index": 203,
+    "style": "Normal",
+    "text": "（6）反馈模块：收集用户对系统的意见建议。用户通过FeedbackController提交反馈内容（最多500字）和联系方式，管理员在FeedbackManage.vue中查看反馈列表并更新处理状态（待处理→已处理）。"
+  },
+  {
+    "index": 204,
+    "style": "Normal",
+    "text": "（7）沟通模块：支持工单内的实时文本沟通。学生和维修工可在工单详情页面发送文字消息，消息按order_id关联工单并按时间序展示。消息支持图片附件和已读状态标记。"
+  },
+  {
+    "index": 205,
+    "style": "Normal",
+    "text": "模块之间通过RESTful API松耦合调用：认证模块为所有业务接口提供JWT令牌验证；工单模块的状态变更触发通知模块的消息推送；统计模块读取工单和评价数据进行聚合分析；沟通模块使用通知模块的WebSocket通道实现新消息实时提醒。"
+  },
+  {
+    "index": 206,
+    "style": "Heading 2",
+    "text": "4.2 数据库设计"
+  },
+  {
+    "index": 207,
+    "style": "Heading 3",
+    "text": "4.2.1 E-R图与实体关系"
+  },
+  {
+    "index": 208,
+    "style": "Normal",
+    "text": "系统核心实体包括用户（SysUser）、报修工单（RepairOrder）、工单操作日志（OrderLog）、评价（RepairEvaluation）、反馈（SysFeedback）和沟通消息（ChatMessage）。各实体间关系如下：一个用户可以创建多个报修工单（一对多），一个用户可以处理多个维修工单（一对多），一个工单对应一条评价记录（一对一），一个工单对应多条操作日志（一对多），一个工单对应多条沟通消息（一对多），一个用户可以提交多条反馈（一对多）。数据以工单为中心，评价、日志、消息等附属信息均围绕工单组织[23]。"
+  },
+  {
+    "index": 209,
+    "style": "Heading 3",
+    "text": "4.2.2 核心表结构"
+  },
+  {
+    "index": 210,
+    "style": "Normal",
+    "text": "系统使用MySQL 8.0数据库，库名为campus_repair，字符集采用utf8mb4以支持emoji等特殊字符。以下介绍核心表的设计要点。"
+  },
+  {
+    "index": 211,
+    "style": "Normal",
+    "text": "用户表（sys_user）。用户表以user_id（雪花算法bigint）为主键，username（学号/工号）为唯一索引，用于登录凭证查找。password字段存储BCrypt加密密文。role字段以tinyint区分三种角色（0-学生、1-维修员、2-管理员）。phone和email字段均设唯一约束，分别用于手机号和邮箱验证码登录。status字段控制账号启用/禁用，is_deleted字段标记逻辑删除。表含create_time和update_time时间戳字段。"
+  },
+  {
+    "index": 212,
+    "style": "Normal",
+    "text": "报修工单表（repair_order）。工单表以order_id为自增主键。user_id外键关联报修人，repairman_id外键关联指派的维修员。报修信息字段包括title（标题）、description（详细描述）、location（报修地点）、phone_number（联系电话）、campus（校区编码：EAST/WEST）、area（区域编码：DORM/TEACH等）、category（故障类型编码：LIFE_WATER/INFRA_BASKETBALL等）、urgency（紧急程度：1低/2中/3高）、images（图片URL列表，JSON格式存储）。状态管理字段包括status（工单状态编码，与RepairOrderStatus枚举对应）、is_urgent（是否一键急诊）。时间节点字段包括audit_time（审核时间）、dispatch_time（派单时间）、start_time（开始维修时间）、confirm_time（确认完成时间）、completed_time（维修完成时间），记录每个业务环节的时间戳。completed_images字段存储维修工完工时上传的照片。version字段为乐观锁版本号，防止并发更新冲突。索引方面，user_id、repairman_id和status三个字段建立了B+树索引以优化高频查询[17]。"
+  },
+  {
+    "index": 213,
+    "style": "Normal",
+    "text": "评价表（repair_evaluation）。评价表以eval_id为主键，order_id为唯一索引确保一单一评。score字段存储1-5的整数评分，comment字段存储最多500字的文字评价。is_anonymous字段支持匿名评价。该表独立于工单表，通过order_id关联。"
+  },
+  {
+    "index": 214,
+    "style": "Normal",
+    "text": "工单操作日志表（order_log）。记录工单每次状态变更的操作轨迹，包含order_id（工单ID）、operator_id（操作人ID）、action（操作动作类型）、content（操作内容描述）和create_time（操作时间）。该表用于工单的审计追溯。"
+  },
+  {
+    "index": 215,
+    "style": "Normal",
+    "text": "反馈表（sys_feedback）。用户提交的意见反馈，包含user_id（提交人ID）、content（反馈内容，最多500字）、contact_info（联系方式）、status（处理状态：0待处理/1已处理）。"
+  },
+  {
+    "index": 216,
+    "style": "Normal",
+    "text": "沟通消息表（chat_message）。工单内的实时沟通记录，包含order_id（关联工单）、sender_id（发送人ID）、content（消息内容）、images（图片附件JSON）、is_read（已读标记）和create_time（发送时间）。"
+  },
+  {
+    "index": 217,
+    "style": "Heading 3",
+    "text": "4.2.3 业务编码设计"
+  },
+  {
+    "index": 218,
+    "style": "Normal",
+    "text": "系统对校区、区域和故障类型采用编码管理方式，便于前端常量化展示和后端条件查询。"
+  },
+  {
+    "index": 219,
+    "style": "Normal",
+    "text": "校区编码：EAST代表河东校区，WEST代表河西校区。区域编码按校区划分，河东校区包含DORM（普通宿舍）、APART（公寓）、TEACH（教学楼）、LIB（图书馆）；河西校区包含EAST_YARD（东苑）、SOUTH_YARD（南苑）、WEST_YARD（西苑）、NORTH_YARD（北苑）。"
+  },
+  {
+    "index": 220,
+    "style": "Normal",
+    "text": "故障类型编码按大类分为：基础设施类（INFRA_TRACK田径场、INFRA_BASKETBALL篮球场、INFRA_FOOTBALL足球场）；生活设施类（LIFE_DORM宿舍、LIFE_CANTEEN食堂、LIFE_WATER饮水机、LIFE_WASHER洗衣机、LIFE_AIRCON空调、LIFE_LIGHTING照明）；教学设施类（TEACHING_MULTIMEDIA教室多媒体、TEACHING_LAB_EQUIP实验室设备）。编码采用'大类_子类'的命名方式，层次清晰，便于后续扩充。"
+  },
+  {
+    "index": 221,
+    "style": "Heading 2",
+    "text": "4.3 接口设计"
+  },
+  {
+    "index": 222,
+    "style": "Heading 3",
+    "text": "4.3.1 RESTful API设计原则"
+  },
+  {
+    "index": 223,
+    "style": "Normal",
+    "text": "系统API遵循RESTful设计风格，统一使用JSON作为数据传输格式。Base URL为`/api`。接口按资源类型组织，使用HTTP方法表达操作语义：GET查询资源，POST创建资源，PUT全量更新资源，PATCH部分更新资源，DELETE删除资源。所有接口的响应统一封装在Result类中，包含code（状态码）、message（提示消息）和data（业务数据）三个字段。业务异常通过BusinessException抛出，由全局异常处理器GlobalExceptionHandler统一拦截并转换为标准错误响应[21]。"
+  },
+  {
+    "index": 224,
+    "style": "Heading 3",
+    "text": "4.3.2 主要接口列表"
+  },
+  {
+    "index": 225,
+    "style": "Normal",
+    "text": "认证接口（公开访问）：POST /auth/login（用户名密码登录）、POST /auth/login-email（邮箱验证码登录）、POST /auth/register（学生注册，需邮箱验证码）、POST /auth/send-email-code（发送邮箱验证码，支持REGISTER/LOGIN/RESET_PASSWORD三种场景）、POST /auth/logout（登出，清除Redis中Token）、POST /auth/reset-password（找回密码，需邮箱验证码）。"
+  },
+  {
+    "index": 226,
+    "style": "Normal",
+    "text": "用户接口（需JWT认证）：GET /user/profile（获取当前用户资料）、PUT /user/profile（更新个人资料）。"
+  },
+  {
+    "index": 227,
+    "style": "Normal",
+    "text": "报修接口（需JWT认证）：POST /repair（创建报修工单）、GET /repair/list（分页查询工单列表，支持状态/区域/类型筛选）、GET /repair/{id}（查看工单详情，含状态流转记录）、PATCH /repair/{id}/status（更新工单状态，需通过状态机合法性校验）。"
+  },
+  {
+    "index": 228,
+    "style": "Normal",
+    "text": "管理接口（需ROLE_ADMIN权限）：GET /admin/dashboard/stats（看板概览统计）、GET /admin/stats/today（今日报修量）、GET /admin/stats/total（累计工单数）、GET /admin/stats/location-top10（区域报修Top10）、GET /admin/stats/status-dist（工单状态分布）、GET /admin/stats/type-tree（故障类型树）、GET /admin/stats/hour-heatmap（报修时段热力图）、GET /admin/stats/staff-performance（维修工绩效榜）、GET /repair/{id}/dispatch-recommendations（智能派单推荐）、GET /admin/feedback/list（反馈管理列表）、PUT /admin/feedback/{id}/status（更新反馈处理状态）。"
+  },
+  {
+    "index": 229,
+    "style": "Heading 3",
+    "text": "4.3.3 安全与权限设计"
+  },
+  {
+    "index": 230,
+    "style": "Normal",
+    "text": "系统通过Spring Security配置安全策略。公开接口（如认证相关接口、文件上传接口、WebSocket握手路径/ws/**、Knife4j文档路径）在SecurityConfig中放行，不要求认证。其余所有业务接口均需在请求头中携带Bearer JWT令牌。JwtAuthenticationFilter从请求头中提取Token，调用JwtUtil解析并校验有效性，将解析出的用户ID和角色信息写入SecurityContextHolder供权限判断使用。"
+  },
+  {
+    "index": 231,
+    "style": "Normal",
+    "text": "角色权限控制采用方法级注解和路径匹配相结合的方式。/admin/**路径下的接口要求用户具备ROLE_ADMIN角色（role=2）。维修工仅可操作分配给自己的工单（通过repairman_id字段校验），学生仅可操作自己提交的工单（通过user_id字段校验）。越权访问返回HTTP 403状态码[6]。"
+  },
+  {
+    "index": 232,
+    "style": "Heading 2",
+    "text": "4.4 本章小结"
+  },
+  {
+    "index": 233,
+    "style": "Normal",
+    "text": "本章从软件工程设计角度，阐述了校园报修管理系统的总体架构、功能模块、数据库设计、接口设计和安全权限设计。系统采用前后端分离的三层架构，划分为认证、工单、通知、统计、用户、反馈、沟通七大模块。数据库以工单表为核心，辅以用户表、评价表、日志表、反馈表和沟通消息表，通过索引策略保障查询性能。接口设计遵循RESTful风格，统一响应格式，区分公开接口与需认证接口的访问边界，为系统实现提供了设计蓝图。"
+  }
+]

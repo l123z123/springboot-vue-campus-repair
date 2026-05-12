@@ -1,0 +1,192 @@
+[
+  {
+    "index": 114,
+    "style": "Heading 1",
+    "text": "第2章 相关技术介绍"
+  },
+  {
+    "index": 115,
+    "style": "Normal",
+    "text": "本章对校园报修管理系统开发过程中采用的关键技术和框架进行介绍，包括开发环境、数据库技术、缓存技术、后端框架及前端框架，为后续系统设计章节提供技术背景。"
+  },
+  {
+    "index": 116,
+    "style": "Heading 2",
+    "text": "2.1 开发环境"
+  },
+  {
+    "index": 117,
+    "style": "Normal",
+    "text": "系统的开发与运行环境基于Windows 11操作系统，后端使用IntelliJ IDEA作为Java集成开发环境，前端使用Visual Studio Code作为编辑器。项目构建方面，后端通过Maven进行依赖管理与项目构建，前端采用Vite进行模块打包与开发热更新。版本控制使用Git，代码托管于GitHub平台。数据库与缓存服务通过Docker Compose编排管理，便于环境搭建与一致性部署[6]。"
+  },
+  {
+    "index": 118,
+    "style": "Heading 2",
+    "text": "2.2 MySQL 8.0"
+  },
+  {
+    "index": 119,
+    "style": "Normal",
+    "text": "MySQL是当前应用最广泛的开源关系型数据库管理系统，具有体积小、速度快、成本低的特点。MySQL 8.0版本在查询性能、窗口函数、通用表表达式（CTE）等方面有明显提升，同时增强了对JSON数据类型的支持[17]。"
+  },
+  {
+    "index": 120,
+    "style": "Normal",
+    "text": "本系统选用MySQL 8.0.36作为数据持久化方案，通过Docker容器部署，对外暴露3307端口。数据库名为campus_repair，字符集采用utf8mb4以支持emoji等Unicode扩展字符。系统使用MyBatis-Plus作为持久层框架，通过LambdaQueryWrapper等类型安全的方式构建SQL条件，避免了传统字符串拼接带来的SQL注入风险和不便。同时，系统利用MySQL的B+树索引优化高频查询字段（如user_id、repairman_id、status），保障工单列表分页查询的响应性能[10]。"
+  },
+  {
+    "index": 121,
+    "style": "Heading 2",
+    "text": "2.3 Redis 6.2"
+  },
+  {
+    "index": 122,
+    "style": "Normal",
+    "text": "Redis（Remote Dictionary Server）是一种基于内存的键值存储系统，支持字符串、哈希、列表、集合、有序集合等多种数据结构。Redis 6.2版本引入了ACL（访问控制列表）权限控制机制，提升了多用户场景下的安全性[19]。"
+  },
+  {
+    "index": 123,
+    "style": "Normal",
+    "text": "本系统使用Redis 6.2.14作为缓存层，通过Docker容器部署于6379端口，并配置密码认证。系统客户端采用Jedis连接器（而非Lettuce），Jedis提供了简洁直观的同步API，适合校园管理系统这类中低并发场景。Redis在系统中承担了两项职责：一是JWT令牌的缓存存储，键格式为`auth:token:{userId}`，支持登出时服务端主动失效令牌；二是邮箱验证码的临时存储，键格式为`auth:email:code:{scene}:{email}`，设置5分钟过期时间，同一邮箱60秒内不可重复发送[19]。"
+  },
+  {
+    "index": 124,
+    "style": "Normal",
+    "text": "系统设计了Redis降级策略来保障服务可用性。当Redis服务不可用时，JWT令牌仍可正常签发，仅无法从服务端主动失效；邮箱验证码自动切换为进程内ConcurrentHashMap存储，保障注册和登录流程不中断[19]。"
+  },
+  {
+    "index": 125,
+    "style": "Heading 2",
+    "text": "2.4 后端框架"
+  },
+  {
+    "index": 126,
+    "style": "Heading 3",
+    "text": "2.4.1 Spring Boot 2.7"
+  },
+  {
+    "index": 127,
+    "style": "Normal",
+    "text": "Spring Boot是由Pivotal团队提供的Java Web开发框架，基于Spring框架构建，遵循“约定优于配置”的设计理念。通过自动配置机制，Spring Boot大幅减少了Spring应用的XML配置工作，开发者只需关注业务逻辑实现[4]。"
+  },
+  {
+    "index": 128,
+    "style": "Normal",
+    "text": "本系统后端基于Spring Boot 2.7.18构建，Java 8运行环境。Spring Boot的自动配置特性覆盖了数据源配置、事务管理、Web MVC配置等方面。项目采用典型的分层架构：Controller层接收HTTP请求并进行参数校验，Service层处理业务逻辑与事务管理，Mapper层通过MyBatis-Plus封装数据库操作。全局异常通过GlobalExceptionHandler统一拦截，返回标准JSON错误响应[4]。"
+  },
+  {
+    "index": 129,
+    "style": "Heading 3",
+    "text": "2.4.2 MyBatis-Plus 3.5"
+  },
+  {
+    "index": 130,
+    "style": "Normal",
+    "text": "MyBatis-Plus是MyBatis的增强工具，在保留MyBatis原生能力的基础上，提供了通用Mapper接口、条件构造器、分页插件、逻辑删除、乐观锁等开箱即用的功能，显著减少了重复的CRUD代码编写[10]。"
+  },
+  {
+    "index": 131,
+    "style": "Normal",
+    "text": "系统使用MyBatis-Plus 3.5.5版本，实体类通过@TableName注解映射数据库表，@TableId注解指定主键并使用雪花算法（IdType.ASSIGN_ID）生成分布式唯一ID。分页查询通过Page对象和LambdaQueryWrapper组合实现，支持按状态、区域、类型等多条件组合筛选。乐观锁通过version字段和@Version注解实现，在工单并发更新场景下（如管理员派单与维修工接单的并发冲突）保障数据一致性[10]。"
+  },
+  {
+    "index": 132,
+    "style": "Heading 3",
+    "text": "2.4.3 Spring Security与JWT认证"
+  },
+  {
+    "index": 133,
+    "style": "Normal",
+    "text": "Spring Security是Spring生态体系中的安全框架，提供认证（Authentication）和授权（Authorization）两大功能。系统通过SecurityConfig配置安全策略，区分公开接口与需认证接口的访问边界：认证相关接口（登录、注册、发送验证码等）、文件上传接口（/files/）、WebSocket握手路径（/ws/）和Knife4j API文档路径放行无需认证；其余业务接口均需携带Bearer JWT令牌[6]。"
+  },
+  {
+    "index": 134,
+    "style": "Normal",
+    "text": "JWT（JSON Web Token）是一种紧凑的、URL安全的令牌格式，由头部（Header）、载荷（Payload）和签名（Signature）三部分组成。系统使用jjwt 0.11.5库实现JWT的生成、解析和校验。令牌载荷中封装用户ID、用户名和角色信息，有效期为2小时。JwtAuthenticationFilter在每次请求时从Authorization请求头中提取Token并解析校验，将用户身份信息写入SecurityContextHolder。配合Spring Security的@PreAuthorize注解和路径匹配，实现基于角色的方法级权限控制[17]。"
+  },
+  {
+    "index": 135,
+    "style": "Heading 3",
+    "text": "2.4.4 Spring Mail邮件服务"
+  },
+  {
+    "index": 136,
+    "style": "Normal",
+    "text": "Spring Mail是Spring框架对JavaMail的封装，提供了MailSender和JavaMailSender接口，简化了邮件发送的配置与编码工作。系统通过spring-boot-starter-mail启动器引入邮件能力，在application.yml中配置SMTP服务器（如smtp.qq.com）、发件邮箱地址和SMTP授权码。邮件发送采用SimpleMailMessage构建简单文本邮件，用于发送邮箱验证码和系统通知[10]。"
+  },
+  {
+    "index": 137,
+    "style": "Heading 2",
+    "text": "2.5 前端框架"
+  },
+  {
+    "index": 138,
+    "style": "Heading 3",
+    "text": "2.5.1 Vue 3"
+  },
+  {
+    "index": 139,
+    "style": "Normal",
+    "text": "Vue.js是由尤雨溪开发的渐进式JavaScript框架，Vue 3版本引入了组合式API（Composition API），提供了更灵活的代码组织方式和更好的TypeScript支持。Vue 3的响应式系统基于ES6的Proxy实现，解决了Vue 2中Object.defineProperty的局限性（如无法检测对象属性的新增和删除）[19]。"
+  },
+  {
+    "index": 140,
+    "style": "Normal",
+    "text": "本系统前端采用Vue 3.4.0，搭配Vite 5.0作为构建工具。Vite基于原生ES模块实现开发时的冷启动和热模块替换（HMR），构建延迟远低于传统Webpack。页面路由使用Vue Router 4.2.5管理，支持按角色动态加载路由组件。全局状态管理采用Pinia 2.1.7替代Vuex，Pinia提供了更简洁的API和对TypeScript的更好支持，系统中的user store管理用户令牌和个人信息，systemNotify store管理管理端的WebSocket通知列表[19]。"
+  },
+  {
+    "index": 141,
+    "style": "Heading 3",
+    "text": "2.5.2 Element Plus 2.4"
+  },
+  {
+    "index": 142,
+    "style": "Normal",
+    "text": "Element Plus是面向Vue 3的桌面端UI组件库，提供了按钮、表格、表单、对话框、导航菜单等组件。系统管理员端和维修工端采用Element Plus组件构建管理后台界面，统一的组件风格保障了界面的专业性和一致性。表单校验通过Element Plus内置的Form组件完成，表格的分页、排序、筛选功能通过Table组件的配置化属性实现，组件提供的插槽（Slot）机制支持灵活的定制化渲染需求[19]。"
+  },
+  {
+    "index": 143,
+    "style": "Heading 3",
+    "text": "2.5.3 ECharts 6.0"
+  },
+  {
+    "index": 144,
+    "style": "Normal",
+    "text": "ECharts是Apache开源的数据可视化图表库，支持折线图、柱状图、饼图、散点图、热力图、旭日图等数十种图表类型。ECharts 6.0优化了大数据量的渲染性能，增强了移动端的交互体验[4]。"
+  },
+  {
+    "index": 145,
+    "style": "Normal",
+    "text": "系统在管理端数据分析页面中使用ECharts 6.0实现多维度图表呈现：区域报修Top10采用柱状图展示报修集中程度；工单状态分布采用饼图展示系统整体运行状况；故障类型采用旭日图支持从大类到细类的层级下钻；报修时段分布采用热力图以颜色深浅反映不同时段的报修活跃度；维修工绩效采用横向柱状图对比各维修工完工数量与平均评分[4]。"
+  },
+  {
+    "index": 146,
+    "style": "Heading 2",
+    "text": "2.6 WebSocket与STOMP协议"
+  },
+  {
+    "index": 147,
+    "style": "Normal",
+    "text": "WebSocket是HTML5规范中定义的全双工通信协议，在单个TCP连接上实现客户端与服务端之间的双向实时通信，避免了HTTP协议下客户端不断轮询带来的带宽浪费和延迟问题[6]。"
+  },
+  {
+    "index": 148,
+    "style": "Normal",
+    "text": "STOMP（Simple Text Oriented Messaging Protocol）是建立在WebSocket之上的简单文本消息协议，定义了消息的发送、订阅和路由语义。Spring框架通过spring-websocket模块提供了对STOMP的原生支持。本系统在WebSocketConfig中启用STOMP消息代理，设置`/topic`作为简单代理前缀，客户端订阅`/topic/notify`即可接收服务端广播的通知消息。服务端通过SimpMessagingTemplate的convertAndSend方法向指定目标发送消息，消息体为JSON格式[17]。"
+  },
+  {
+    "index": 149,
+    "style": "Normal",
+    "text": "WebSocket在系统中主要用于两类实时推送场景：一是工单状态变更通知，当工单状态发生流转时（如学生提交报修、管理员审核通过、维修工完成维修），系统通过NotifyService向管理端铃铛组件推送CREATED或STATUS_CHANGED类型的通知消息；二是SLA超时预警通知，当SlaTimeoutMonitor定时扫描发现超时工单后，向管理员推送SLA_TIMEOUT类型的通知，消息载荷中包含超时工单数量和工单ID列表，管理员可点击通知直接跳转至对应工单详情页[10]。"
+  },
+  {
+    "index": 150,
+    "style": "Heading 2",
+    "text": "2.7 本章小结"
+  },
+  {
+    "index": 151,
+    "style": "Normal",
+    "text": "本章对校园报修管理系统采用的核心技术进行了介绍。后端方面，Spring Boot 2.7提供自动配置和分层架构支撑，MyBatis-Plus 3.5简化了数据访问层开发，Spring Security配合JWT实现无状态认证与角色鉴权，Spring Mail提供邮箱验证码发送能力。前端方面，Vue 3 Composition API配合Element Plus组件库构建响应式用户界面，ECharts 6.0实现数据可视化，WebSocket STOMP协议支撑实时消息推送。数据层方面，MySQL 8.0负责结构化业务数据的持久化存储，Redis 6.2（Jedis客户端）提供Token缓存和邮箱验证码的临时存储并支持内存降级。上述技术栈共同构成了系统的技术骨架，为后续章节的系统设计与实现提供了基础。"
+  }
+]

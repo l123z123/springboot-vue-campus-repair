@@ -1,0 +1,202 @@
+[
+  {
+    "index": 235,
+    "style": "Heading 1",
+    "text": "第5章 系统实现"
+  },
+  {
+    "index": 236,
+    "style": "Normal",
+    "text": "本章详细阐述校园报修管理系统核心功能模块的实现过程，包括用户认证模块、报修工单状态机、智能派单推荐算法、WebSocket实时通知与SLA超时预警机制以及数据统计可视化。"
+  },
+  {
+    "index": 237,
+    "style": "Heading 2",
+    "text": "5.1 用户认证模块"
+  },
+  {
+    "index": 238,
+    "style": "Normal",
+    "text": "系统的用户认证模块基于Spring Security安全框架与JWT（JSON Web Token）令牌机制实现，同时集成了邮箱验证码功能，为用户提供多种安全登录方式。"
+  },
+  {
+    "index": 239,
+    "style": "Normal",
+    "text": "JWT认证流程。 用户通过用户名和密码提交登录请求后，系统调用`AuthController.login`接口进行处理。后端先通过`UserService`查询用户信息，随后使用BCrypt密码编码器对输入的密码进行匹配校验。校验通过后，系统调用`JwtUtil.generateToken`方法生成JWT令牌，令牌中封装了用户ID、用户名和角色信息，有效期为2小时。生成的令牌同时写入Redis缓存，键的格式为`auth:token:{userId}`，以便实现服务端主动失效。当Redis服务不可用时，系统采用AtomicBoolean标记仅输出一次警告日志，令牌仍可正常签发，登录流程不中断，实现了自动降级[4]。"
+  },
+  {
+    "index": 240,
+    "style": "Normal",
+    "text": "邮箱验证码注册与登录。 注册接口`AuthController.register`要求新用户提供邮箱地址并输入验证码。系统向用户邮箱发送6位随机数字验证码，有效期5分钟。邮件发送基于Spring Mail框架，通过配置QQ邮箱SMTP服务实现。验证码优先存储至Redis，键格式为`auth:email:code:{scene}:{email}`，同一邮箱60秒内不可重复发送。当Redis不可用时，验证码自动降级为进程内ConcurrentHashMap存储，保障单机环境下注册流程仍可完成[19]。`EmailVerificationServiceImpl`中设计了memStore内存存储，以ConcurrentHashMap实现线程安全的验证码存取，每种场景可独立存储，过期时间与Redis模式保持一致。"
+  },
+  {
+    "index": 241,
+    "style": "Normal",
+    "text": "注册时系统还进行了多重校验：用户名唯一性检查防止重复注册，手机号唯一性约束确保一个手机号只能绑定一个账号，邮箱唯一性检查避免同一邮箱重复使用。公开注册仅允许学生角色（role=0），维修工和管理员由系统管理员在后台创建，确保权限安全。"
+  },
+  {
+    "index": 242,
+    "style": "Normal",
+    "text": "此外，系统还提供邮箱验证码登录方式。用户通过`/auth/login-email`接口提交邮箱和验证码，系统先校验邮箱是否已绑定账号，再调用`verifyAndConsume`方法验证验证码正确性，验证通过后直接签发JWT令牌。该方式适用于用户遗忘密码的场景，降低了登录门槛。找回密码功能亦依赖邮箱验证码机制，用户需提供用户名、邮箱和验证码，三者匹配后方可重置密码[21]。"
+  },
+  {
+    "index": 243,
+    "style": "Heading 2",
+    "text": "5.2 报修工单状态机"
+  },
+  {
+    "index": 244,
+    "style": "Normal",
+    "text": "报修工单是系统的核心业务实体，其生命周期通过状态机模型进行管理。系统定义了`RepairOrderStatus`枚举类，包含11种状态（含AUDITED=2为过渡态，实际可见10种），每种状态明确定义了允许的下一状态集合，状态流转需通过合法性校验。"
+  },
+  {
+    "index": 245,
+    "style": "Normal",
+    "text": "工单全生命周期主流程为：待审核（0）→ 审核中（1）→ 待派单（3）→ 已派单（4）→ 维修中（5）→ 维修完成（6）→ 学生确认（7）→ 已评价（8）。另有已拒绝（9）和已取消（10）两种终止状态。各状态流转规则如下[3]："
+  },
+  {
+    "index": 246,
+    "style": "Normal",
+    "text": "（1）学生提交报修后，工单进入\"待审核\"状态（SUBMITTED，code=0）。此时仅允许管理员将其转为\"审核中\"（code=1）或学生自行\"已取消\"（code=10）。"
+  },
+  {
+    "index": 247,
+    "style": "Normal",
+    "text": "（2）管理员审核通过后，工单进入\"待派单\"状态（WAITING_DISPATCH，code=3），等待管理员指定维修人员。若审核不通过，可转入\"已拒绝\"（code=9）。"
+  },
+  {
+    "index": 248,
+    "style": "Normal",
+    "text": "（3）管理员完成派单并绑定维修工后，状态变为\"已派单\"（DISPATCHED，code=4）。"
+  },
+  {
+    "index": 249,
+    "style": "Normal",
+    "text": "（4）维修工接单并开始维修，状态转为\"维修中\"（PROCESSING，code=5）。"
+  },
+  {
+    "index": 250,
+    "style": "Normal",
+    "text": "（5）维修工完成维修并上传完工照片后，状态转为\"维修完成\"（COMPLETED，code=6）。"
+  },
+  {
+    "index": 251,
+    "style": "Normal",
+    "text": "（6）学生对维修结果进行确认，状态转为\"学生确认\"（CONFIRMED，code=7）。"
+  },
+  {
+    "index": 252,
+    "style": "Normal",
+    "text": "（7）学生提交评价后，状态转为\"已评价\"（CLOSED，code=8），工单进入终态闭环。"
+  },
+  {
+    "index": 253,
+    "style": "Normal",
+    "text": "在每个状态转换节点，系统通过`RepairOrderStatus.canTransitionTo`方法验证目标状态是否在允许集合内，非法跳转将被拒绝。工单表同时记录了`audit_time`、`dispatch_time`、`start_time`、`confirm_time`、`completed_time`等流程节点时间，为后续SLA监控和统计分析提供数据基础。"
+  },
+  {
+    "index": 254,
+    "style": "Heading 2",
+    "text": "5.3 智能派单推荐算法"
+  },
+  {
+    "index": 255,
+    "style": "Normal",
+    "text": "当管理员审核通过工单后，系统提供智能派单推荐功能，辅助管理员选择合适的维修人员。推荐算法位于`RepairServiceImpl.recommendRepairmen`方法中，基于四个维度对可用的维修工进行综合评分[1]。"
+  },
+  {
+    "index": 256,
+    "style": "Normal",
+    "text": "推荐维度与权重设计。 算法从数据库中查询所有状态正常（status=1）的维修工（role=1），排除报修人本人，然后对每位维修工逐一计算推荐分数。评分公式如下："
+  },
+  {
+    "index": 257,
+    "style": "Normal",
+    "text": "- 当前负载惩罚：统计维修工当前正在处理的工单数量（状态为\"已派单\"或\"维修中\"），每有1单扣减20分。负载越低，维修工越有空闲处理新工单。"
+  },
+  {
+    "index": 258,
+    "style": "Normal",
+    "text": "- 同类故障经验加分：统计维修工历史处理过的同类故障工单数量（状态为\"维修完成\"\"学生确认\"或\"已评价\"），每单加8分，上限5单。经验越丰富加分越多。"
+  },
+  {
+    "index": 259,
+    "style": "Normal",
+    "text": "- 同区域经验加分：统计维修工历史处理过的同区域工单数量，每单加5分，上限5单。熟悉该区域的维修工对位置和环境更了解。"
+  },
+  {
+    "index": 260,
+    "style": "Normal",
+    "text": "- 历史评分加成：计算维修工历史评价的平均分，乘以4后加入总分。平均分越高说明服务质量越好。"
+  },
+  {
+    "index": 261,
+    "style": "Normal",
+    "text": "- 紧急工单加成：若当前工单标记为\"一键急诊\"且维修工当前无在办工单，额外加10分，优先推荐空闲维修工。"
+  },
+  {
+    "index": 262,
+    "style": "Normal",
+    "text": "最终得分以100分为基数，经过上述加减后得到综合评分。若得分低于0则设为0分。所有维修工按评分降序排列，评分相同时按当前在办数量升序排列（优先推荐更空闲的）。推荐结果同时包含每个维修工的用户名、真实姓名、部门、评分分值及推荐理由（如\"当前在办工单2单\"\"处理过同类故障5单\"\"熟悉该区域，历史处理3单\"\"历史平均评分4.5分\"等），使推荐结果可解释、可追溯，管理员可根据推荐理由做出最终的派单决策。"
+  },
+  {
+    "index": 263,
+    "style": "Heading 2",
+    "text": "5.4 WebSocket实时通知与SLA超时预警"
+  },
+  {
+    "index": 264,
+    "style": "Normal",
+    "text": "系统采用STOMP（Simple Text Oriented Messaging Protocol）over WebSocket协议实现服务端向客户端实时推送消息，无需客户端轮询。"
+  },
+  {
+    "index": 265,
+    "style": "Normal",
+    "text": "WebSocket配置。 `WebSocketConfig`类启用了STOMP消息代理，配置`enableSimpleBroker(\"/topic\")`设置消息代理前缀，客户端订阅`/topic/notify`即可接收广播通知。同时设置`setApplicationDestinationPrefixes(\"/app\")`作为客户端发送消息的应用前缀。WebSocket端点注册在`/ws`路径，允许所有来源的跨域访问，兼容`@stomp/stompjs`客户端的原生WebSocket连接[18]。"
+  },
+  {
+    "index": 266,
+    "style": "Normal",
+    "text": "通知推送机制。 `NotifyService`通过Spring的`SimpMessagingTemplate`向`/topic/notify`广播JSON格式的通知消息。通知类型包括：`CREATED`（新工单创建）、`STATUS_CHANGED`（工单状态变更）、`SLA_TIMEOUT`（SLA超时预警）、`CHAT`（工单沟通消息）等。前端通过`useWebSocket.js`建立STOMP连接，订阅`/topic/notify`，接收到消息后写入Pinia状态管理中的`systemNotify` store，管理员端顶栏的铃铛组件自动展示最新通知。"
+  },
+  {
+    "index": 267,
+    "style": "Normal",
+    "text": "SLA超时预警机制。 `SlaTimeoutMonitor`类以定时任务方式运行，通过`@Scheduled(cron = \"0 */5 * * * ?\")`注解每5分钟执行一次扫描。扫描逻辑查询所有状态为\"待审核\"\"审核中\"或\"待派单\"且创建时间超过配置阈值的工单。超时时长由配置项`repair.sla.pending-hours`控制，默认值为24小时。对于超时工单，系统自动将其状态更新为\"已取消\"（code=10），备注中记录\"系统自动取消：超过N小时未处理\"，并通过WebSocket向管理员推送SLA_TIMEOUT通知，payload中携带被取消的工单数量和工单ID列表，管理员可点击跳转至工单详情页查看[19]。"
+  },
+  {
+    "index": 268,
+    "style": "Heading 2",
+    "text": "5.5 数据统计可视化"
+  },
+  {
+    "index": 269,
+    "style": "Normal",
+    "text": "系统的管理端提供了多维度数据统计功能，后端通过`DashboardService`实现数据聚合查询，前端基于ECharts 6.0图表库进行可视化呈现。"
+  },
+  {
+    "index": 270,
+    "style": "Normal",
+    "text": "统计接口设计。 `StatsController`暴露了7个统计API端点：`/admin/stats/today`返回今日报修数量，通过LambdaQueryWrapper过滤当日0时至24时创建的工单；`/admin/stats/total`返回累计工单总数；`/admin/stats/location-top10`基于全部工单的location字段进行分组计数，按数量降序取前10名；`/admin/stats/status-dist`统计各状态工单数量，并将状态码映射为中文标签；`/admin/stats/type-tree`将故障类型按大类（生活服务、基础设施、其他）聚合为两级树结构，适配ECharts旭日图；`/admin/stats/hour-heatmap`按周一至周日和0至23时的二维矩阵统计报修时段分布，生成热力图数据；`/admin/stats/staff-performance`以维修工为维度统计已完工工单数量和平均评分，形成维修工绩效排行榜[5]。"
+  },
+  {
+    "index": 271,
+    "style": "Normal",
+    "text": "前端图表呈现。 管理端`Dashboard.vue`页面将这些数据以ECharts图表形式展示，包括：区域报修数量Top10柱状图，直观显示各区域报修集中程度；工单状态分布饼图，展示系统整体运行状况；故障类型旭日图，支持从大类到具体类型的层级下钻；报修时段热力图，以颜色深浅反映不同时段报修活跃度；维修工绩效表，展示每位维修工的完工数量和平均评分，辅助绩效考核。"
+  },
+  {
+    "index": 272,
+    "style": "Normal",
+    "text": "后端数据聚合实现。 `DashboardServiceImpl`类中通过MyBatis-Plus的LambdaQueryWrapper进行灵活的条件查询。例如概览统计方法`getOverview`一次性返回总工单数、待处理数（待审核+审核中+待派单）、已完成数（维修完成+学生确认+已评价）和紧急工单数四项指标。维修工绩效统计中，系统预查询所有完工工单并按维修工ID分组，同时批量加载评价数据计算均分，再批量查询用户表获取真实姓名，以Java Stream流式处理完成数据聚合，避免N+1查询问题。"
+  },
+  {
+    "index": 273,
+    "style": "Heading 2",
+    "text": "5.6 本章小结"
+  },
+  {
+    "index": 274,
+    "style": "Normal",
+    "text": "本章详细介绍了校园报修管理系统的核心功能模块实现。用户认证模块采用JWT+BCrypt密码加密+邮箱验证码的三重机制保障安全；报修工单状态机以11种状态（含过渡态）覆盖了从报修提交到评价闭环的完整业务流程；智能派单推荐算法综合当前负载、同类经验、区域经验和历史评分四个维度对维修工进行量化评分，辅助管理员科学决策；WebSocket实时推送消除了页面刷新的等待成本，SLA超时预警自动触发超时工单的取消和通知；数据统计可视化将工单数据转化为直观图表，为校园后勤管理提供数据支撑。以上模块共同构成了系统的技术骨架，各模块之间通过RESTful API和WebSocket消息松耦合协作，保障了系统的可维护性和可扩展性。"
+  }
+]

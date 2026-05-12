@@ -1,0 +1,27 @@
+[
+  {
+    "index": 64,
+    "style": "Heading 1",
+    "text": "Abstract"
+  },
+  {
+    "index": 65,
+    "style": "Normal",
+    "text": "With the continuous advancement of information technology in higher education, campus repair management, as a critical component of daily university operations, directly impacts both the service experience of faculty and students and overall management efficiency. To address the challenges of traditional campus repair processes — including limited reporting channels, insufficient information display, untraceable repair progress, lack of real-time supervision of maintenance staff workload, and inefficient statistical aggregation — this thesis designs and implements a campus repair management system based on a SpringBoot+Vue front-end and back-end separation architecture."
+  },
+  {
+    "index": 66,
+    "style": "Normal",
+    "text": "The system establishes a complete repair management closed loop for three user roles: students, maintenance staff, and administrators. The back-end is built on Spring Boot 2.7 with MyBatis-Plus for data persistence, integrates Spring Security and JWT for authentication and authorization, and employs Redis 6.2 for token caching and email verification code storage. The front-end is developed with Vue 3 Composition API and Element Plus component library, featuring a responsive user interface and ECharts 6.0 for data visualization. The system introduces an intelligent dispatch recommendation algorithm that generates explainable scores based on four weighted dimensions: current workload, similar-fault experience, same-area experience, and historical ratings. It also implements an SLA timeout alert mechanism that automatically identifies overdue work orders via scheduled tasks and pushes alert notifications, as well as a Redis-to-memory automatic degradation strategy that ensures uninterrupted authentication service when Redis is unavailable. The system has passed 11 functional test cases covering authentication, work orders, dispatch recommendation, notification, statistics, and concurrency modules, achieving a 100% pass rate and meeting deployment readiness standards."
+  },
+  {
+    "index": 67,
+    "style": "Normal",
+    "text": "Keywords: Campus Repair Management; Spring Boot; Vue; Front-end and Back-end Separation; Intelligent Dispatch; Work Order State Machine"
+  },
+  {
+    "index": 68,
+    "style": "Normal",
+    "text": ""
+  }
+]
