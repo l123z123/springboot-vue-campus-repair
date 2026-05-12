@@ -203,6 +203,9 @@ async function handleSubmit() {
   const hasDesc = form.value.description && form.value.description.trim()
   const hasImages = imageList.value.length > 0
   if (!hasImages && !hasDesc) { ElMessage.warning('请至少上传一张图片或填写故障描述'); return }
+  if (hasImages && !hasDesc) {
+    ElMessage.warning('建议补充故障描述，方便维修人员快速定位问题')
+  }
   const phoneVal = (form.value.phoneNumber || '').trim()
   if (!PHONE_REG.test(phoneVal)) { ElMessage.error('请输入有效的手机号码'); return }
   if (!form.value.campus || !form.value.area) { ElMessage.error('请选择校区与具体位置'); return }

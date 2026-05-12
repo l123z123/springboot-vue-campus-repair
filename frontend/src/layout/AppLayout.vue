@@ -2,7 +2,7 @@
   <div class="app-layout" :class="{ 'app-layout--staff': isStaff }">
     <header class="app-header">
       <div class="app-header__left">
-        <el-button class="collapse-btn" text @click="sidebarCollapsed = !sidebarCollapsed">
+        <el-button class="collapse-btn" text @click="sidebarCollapsed = !sidebarCollapsed" aria-label="切换侧栏">
           <el-icon><component :is="sidebarCollapsed ? Expand : Fold" /></el-icon>
         </el-button>
         <span class="app-header__title">校园报修管理系统</span>
@@ -324,4 +324,11 @@ onUnmounted(() => {
 /* transition */
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+@media (max-width: 768px) {
+  .app-sidebar {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+}
 </style>

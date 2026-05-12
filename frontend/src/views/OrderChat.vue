@@ -47,7 +47,7 @@
       </div>
       <div class="oc-input-row">
         <el-upload :show-file-list="false" accept="image/jpeg,image/png,image/jpg" :before-upload="onPickImage">
-          <el-button :icon="Picture" circle text />
+          <el-button :icon="Picture" circle text aria-label="上传图片" />
         </el-upload>
         <el-input
           v-model="text"
